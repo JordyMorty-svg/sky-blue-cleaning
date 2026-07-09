@@ -44,7 +44,7 @@ function About() {
           <h3 className="about__story-heading">Real work, done right</h3>
           <p>
             We use water-fed poles to reach second-story windows safely from the
-            ground.Every windowgets the same attention to detail, whether it&apos;s a storefront or the
+            ground. Every window gets the same attention to detail, whether it&apos;s a storefront or the
             kitchen window over your sink.
           </p>
           <p>
