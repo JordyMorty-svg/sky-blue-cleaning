@@ -16,7 +16,7 @@ const team = [
     role: "Co-owner",
     photo: jordanPortrait,
     chips: ["3 yrs carpet cleaning", "CS degree", "Built this site"],
-    bio: "Jordan is Hayden's older brother and co-owner. He brings three years of carpet cleaning experience, sharp attention to detail, and the same work ethic that runs in the family. He holds a computer science degree, and built this very website, and rruns the customer side so every job is smooth from first call to final pane. Off the clock, he trains jiu jitsu.",
+    bio: "Jordan is Hayden's older brother and co-owner. He brings three years of carpet cleaning experience, sharp attention to detail, and the same work ethic that runs in the family. He holds a computer science degree, and built this very website, and runs the customer side so every job is smooth from first call to final pane. Off the clock, he trains jiu jitsu.",
   },
 ];
 
