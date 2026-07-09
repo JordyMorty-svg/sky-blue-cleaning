@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import "./Navbar.css";
-import logoMark from "../../assets/logo-mark.png";
+import logoMark from "../../assets/logo-mark-3.png";
 
 const links = [
   { label: "Home", href: "#home" },
