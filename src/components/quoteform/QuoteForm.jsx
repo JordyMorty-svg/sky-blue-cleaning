@@ -80,8 +80,11 @@ function QuoteForm() {
 
         // Google Ads conversion — fires only on a real successful quote submission
         if (typeof window.gtag === "function") {
-          window.gtag("event", "conversion", {
-          send_to: "AW-18343098144/c22yCJXTmNUcEKDu1apE",});}
+          window.gtag("event", "conversion", 
+            {send_to: "AW-18343098144/c22yCJXTmNUcEKDu1apE",}
+          );
+        }
+        
       } else {
         throw new Error(result.message || "Submission failed");
       }
