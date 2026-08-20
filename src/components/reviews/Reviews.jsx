@@ -1,17 +1,17 @@
 import "./Reviews.css";
 
-const GOOGLE_REVIEWS_URL = "https://share.google/RzkJ3rvVbLQq0NsNT";
+const GOOGLE_REVIEWS_URL = "https://g.page/r/CUApffEylLUgEBM/review";
 
 const reviews = [
   {
-    name: "Jennette",
+    name: "Carolyn",
     stars: 5,
-    text: "Prompt, efficient, professional job. Very happy with window cleaning. Will definitely use again.",
+    text: "Very efficient and professional - windows look amazing.",
   },
   {
-    name: "Sofia",
+    name: "Laura",
     stars: 5,
-    text: "Very efficient, professional and detailed cleaning, these guys know their stuff",
+    text: "We are very happy with our experience with Sky Blue Window Cleaning.  Hayden is hard working, professional, easy to work with and the price was reasonable. Highly recommend!",
   },
 ];
 
