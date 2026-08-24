@@ -7,7 +7,8 @@ const PRICING = {
   oneStory: 200,
   twoStory: 300,
   perWindow: 5,
-  interiorAddOn: 100,
+  interiorPerFloor: 100, // interior cleaning is charged per floor
+  perSkylight: 15,       // each skylight adds this much
 };
 
 /* ---- Business contact info ---- */
@@ -26,6 +27,7 @@ const WEB3FORMS_ACCESS_KEY = '4da845f5-1959-4972-8192-e060287fc8b2';
 function QuoteForm() {
   const [stories, setStories] = useState("one");
   const [windows, setWindows] = useState(10);
+  const [skylights, setSkylights] = useState(0);
   const [interior, setInterior] = useState(false);
 
   const [name, setName] = useState("");
@@ -36,13 +38,54 @@ function QuoteForm() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent
 
+  // Inputs can be empty ("") mid-typing; treat that as 0 for the math.
+  const windowsNum = windows === "" ? 0 : windows;
+  const skylightsNum = skylights === "" ? 0 : skylights;
+  const floors = stories === "two" ? 2 : 1;
+
   const base = stories === "two" ? PRICING.twoStory : PRICING.oneStory;
-  const windowsCost = windows * PRICING.perWindow;
-  const interiorCost = interior ? PRICING.interiorAddOn : 0;
-  const total = base + windowsCost + interiorCost;
+  const windowsCost = windowsNum * PRICING.perWindow;
+  const skylightsCost = skylightsNum * PRICING.perSkylight;
+  const interiorCost = interior ? floors * PRICING.interiorPerFloor : 0;
+  const total = base + windowsCost + skylightsCost + interiorCost;
 
   function adjustWindows(delta) {
-    setWindows((w) => Math.min(100, Math.max(1, w + delta)));
+    setWindows((w) => {
+      const n = w === "" ? 0 : w;
+      return Math.min(100, Math.max(1, n + delta));
+    });
+  }
+
+  function adjustSkylights(delta) {
+    setSkylights((s) => {
+      const n = s === "" ? 0 : s;
+      return Math.min(50, Math.max(0, n + delta));
+    });
+  }
+
+  // Shared typing handler for the number steppers: allow an empty field and
+  // partial entry while typing, so backspacing/retyping doesn't snap to 1.
+  function handleCountChange(setter, max) {
+    return (e) => {
+      const raw = e.target.value;
+      if (raw === "") {
+        setter("");
+        return;
+      }
+      const v = parseInt(raw, 10);
+      if (Number.isNaN(v)) return; // ignore stray non-numeric input
+      setter(Math.min(max, Math.max(0, v)));
+    };
+  }
+
+  // Clamp to the real minimum only once the field loses focus.
+  function handleCountBlur(setter, min, max) {
+    return () => {
+      setter((val) => {
+        const v = parseInt(val, 10);
+        return Number.isNaN(v) ? min : Math.min(max, Math.max(min, v));
+      });
+    };
   }
 
   async function handleSubmit(e) {
@@ -68,8 +111,13 @@ function QuoteForm() {
         email: email || "—",
         address: address || "—",
         stories: stories === "two" ? "Two story" : "One story",
-        windows,
-        interior_cleaning: interior ? `Yes (+$${PRICING.interiorAddOn})` : "No",
+        windows: windowsNum,
+        skylights: skylightsNum
+          ? `${skylightsNum} (+$${skylightsCost})`
+          : "None",
+        interior_cleaning: interior
+          ? `Yes — ${floors} floor${floors > 1 ? "s" : ""} (+$${interiorCost})`
+          : "No",
         estimated_total: `$${total}`,
         notes: notes || "—",
       }),
@@ -83,7 +131,8 @@ function QuoteForm() {
       email: email || null,
       address: address || null,
       stories,              // 'one' | 'two' — matches the CHECK constraint
-      windows,
+      windows: windowsNum,
+      skylights: skylightsNum,
       interior,
       estimate: total,
       notes: notes || null,
@@ -165,20 +214,53 @@ function QuoteForm() {
               </button>
               <input
                 type="number"
+                inputMode="numeric"
                 className="quote__stepper-input"
                 value={windows}
                 min="1"
                 max="100"
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setWindows(Number.isNaN(v) ? 1 : Math.min(100, Math.max(1, v)));
-                }}
+                onChange={handleCountChange(setWindows, 100)}
+                onBlur={handleCountBlur(setWindows, 1, 100)}
               />
               <button
                 type="button"
                 className="quote__stepper-btn"
                 onClick={() => adjustWindows(1)}
                 aria-label="More windows"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="quote__field">
+            <span className="quote__label">
+              Skylights <span className="quote__optional">(optional)</span>
+            </span>
+            <div className="quote__stepper">
+              <button
+                type="button"
+                className="quote__stepper-btn"
+                onClick={() => adjustSkylights(-1)}
+                aria-label="Fewer skylights"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                inputMode="numeric"
+                className="quote__stepper-input"
+                value={skylights}
+                min="0"
+                max="50"
+                onChange={handleCountChange(setSkylights, 50)}
+                onBlur={handleCountBlur(setSkylights, 0, 50)}
+              />
+              <button
+                type="button"
+                className="quote__stepper-btn"
+                onClick={() => adjustSkylights(1)}
+                aria-label="More skylights"
               >
                 +
               </button>
@@ -193,7 +275,9 @@ function QuoteForm() {
             />
             <span>
               <strong>Add interior window cleaning</strong>
-              <span className="quote__addon-price">+${PRICING.interiorAddOn}</span>
+              <span className="quote__addon-price">
+                +${PRICING.interiorPerFloor}/floor
+              </span>
             </span>
           </label>
 
@@ -203,12 +287,18 @@ function QuoteForm() {
               <span>${base}</span>
             </div>
             <div className="quote__estimate-row">
-              <span>{windows} windows × ${PRICING.perWindow}</span>
+              <span>{windowsNum} windows × ${PRICING.perWindow}</span>
               <span>${windowsCost}</span>
             </div>
+            {skylightsNum > 0 && (
+              <div className="quote__estimate-row">
+                <span>{skylightsNum} skylights × ${PRICING.perSkylight}</span>
+                <span>${skylightsCost}</span>
+              </div>
+            )}
             {interior && (
               <div className="quote__estimate-row">
-                <span>Interior cleaning</span>
+                <span>Interior cleaning ({floors} floor{floors > 1 ? "s" : ""} × ${PRICING.interiorPerFloor})</span>
                 <span>${interiorCost}</span>
               </div>
             )}
