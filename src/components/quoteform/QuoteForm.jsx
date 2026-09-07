@@ -95,6 +95,7 @@ function QuoteForm() {
         email: email || "—",
         address: address || "—",
         service: "Residential Window Washing",
+        property_type: "Residential",
         stories: stories === "two" ? "Two story" : "One story",
         windows: windowsNum,
         skylights: skylightsNum
@@ -113,6 +114,7 @@ function QuoteForm() {
         address: address || null,
         service: "residential-window-washing",
         source: "website",
+        property_type: "residential",
         stories,              // 'one' | 'two' — matches the CHECK constraint
         windows: windowsNum,
         skylights: skylightsNum,

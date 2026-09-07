@@ -131,9 +131,9 @@ export const services = [
     quote: "request",
     tagline: "Screens that keep the bugs out again.",
     intro:
-      "Window screens collect dust, pollen, and cobwebs, and over time the mesh tears or the frames warp and stop sitting right. We wash them clean, re-fit them so they seat properly, and can re-mesh or patch the ones that have given up, so your screens keep doing their one job.",
+      "Window screens collect dust, pollen, and cobwebs, and over time the mesh tears or the frames warp and stop sitting right. We scrub them down with soap, then rinse them with a dedicated screen cleaner that lifts off every bit of residue so they come back sparkling. We re-fit them so they seat properly, and can re-mesh or patch the ones that have given up, so your screens keep doing their one job.",
     points: [
-      "Screens washed free of dust, pollen, and cobwebs",
+      "Scrubbed with soap, then rinsed with screen cleaner until they sparkle",
       "Re-fitted so they seat properly in the frame",
       "Torn mesh re-screened or patched",
       "Bent or loose frames adjusted where we can",

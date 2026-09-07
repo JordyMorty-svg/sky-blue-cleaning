@@ -51,6 +51,7 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
         email: email || "—",
         address: address || "—",
         service: service.title,
+        property_type: businessInquiry ? "Commercial" : "Residential",
         notes: notes || "—",
       },
       lead: {
@@ -60,6 +61,8 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
         address: address || null,
         service: service.slug,
         source: "website",
+        // Matches the CRM's residential/commercial split (leads.property_type).
+        property_type: businessInquiry ? "commercial" : "residential",
         // Window-only fields don't apply to this service.
         stories: null,
         windows: null,
