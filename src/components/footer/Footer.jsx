@@ -1,9 +1,10 @@
+import { Link } from "react-router-dom";
 import "./Footer.css";
 import logoFull from "../../assets/logo-full.png";
+import { services } from "../../data/services";
+import { CONTACT } from "../../lib/leadSubmit";
 
-const PHONE_DISPLAY = "(541) 730-3593";
-const PHONE_DIGITS = "15417303593";
-const EMAIL = "skybluecleaninggco@gmail.com";
+const { phoneDisplay: PHONE_DISPLAY, phoneDigits: PHONE_DIGITS, email: EMAIL } = CONTACT;
 
 function Footer() {
   return (
@@ -26,20 +27,21 @@ function Footer() {
         <div className="footer__col">
           <h3 className="footer__heading">Explore</h3>
           <ul className="footer__links">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#quote">Get a Quote</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/#services">Services</Link></li>
+            <li><Link to="/#about">About</Link></li>
+            <li><Link to="/#quote">Get a Quote</Link></li>
           </ul>
         </div>
 
         <div className="footer__col">
           <h3 className="footer__heading">Services</h3>
           <ul className="footer__links">
-            <li><a href="#services">Residential windows</a></li>
-            <li><a href="#services">Commercial windows</a></li>
-            <li><a href="#services">Gutter cleaning</a></li>
-            <li><a href="#services">Screens, pressure &amp; solar</a></li>
+            {services.map((service) => (
+              <li key={service.slug}>
+                <Link to={`/services/${service.slug}`}>{service.title}</Link>
+              </li>
+            ))}
           </ul>
         </div>
 

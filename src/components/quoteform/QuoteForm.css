@@ -41,6 +41,12 @@
   align-items: start;
 }
 
+/* Single-column variant used by the request-a-quote form on service pages */
+.quote__grid--single {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+}
+
 .quote__panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;

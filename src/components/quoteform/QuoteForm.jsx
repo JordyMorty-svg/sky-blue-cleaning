@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./QuoteForm.css";
-import { supabase } from "../../supabaseClient";
+import { CONTACT, submitLead, trackQuoteConversion } from "../../lib/leadSubmit";
 
 /* ---- Your pricing (edit these numbers any time) ---- */
 const PRICING = {
@@ -11,18 +11,7 @@ const PRICING = {
   perSkylight: 15,       // each skylight adds this much
 };
 
-/* ---- Business contact info ---- */
-const PHONE_DISPLAY = "(541) 730-3593";
-const PHONE_DIGITS = "15417303593"; // used for call/text links, no spaces
-const EMAIL = "skybluecleaninggco@gmail.com";
-
-/* ---- Web3Forms ---- 
-
-Allows form submissions to be sent to Web3Forms after the customer submits a quote request
-
-*/
-
-const WEB3FORMS_ACCESS_KEY = '4da845f5-1959-4972-8192-e060287fc8b2';
+const { phoneDisplay: PHONE_DISPLAY, phoneDigits: PHONE_DIGITS, email: EMAIL } = CONTACT;
 
 function QuoteForm() {
   const [stories, setStories] = useState("one");
@@ -98,18 +87,14 @@ function QuoteForm() {
     setError("");
     setStatus("sending");
 
-    // --- Path A: Web3Forms (emails the lead to your inbox) ---
-    const web3Submit = fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        access_key: WEB3FORMS_ACCESS_KEY,
+    const { ok } = await submitLead({
+      emailFields: {
         subject: `Quote request — ${name} ($${total})`,
-        from_name: "Sky Blue Cleaning Co. website",
         name,
         phone: phone || "—",
         email: email || "—",
         address: address || "—",
+        service: "Residential Window Washing",
         stories: stories === "two" ? "Two story" : "One story",
         windows: windowsNum,
         skylights: skylightsNum
@@ -120,44 +105,27 @@ function QuoteForm() {
           : "No",
         estimated_total: `$${total}`,
         notes: notes || "—",
-      }),
-    }).then((r) => r.json());
-
-    // --- Path B: Supabase (writes the lead into the CRM database) ---
-    // Column names must match the leads table exactly.
-    const dbSubmit = supabase.from("leads").insert({
-      name,
-      phone: phone || null,
-      email: email || null,
-      address: address || null,
-      stories,              // 'one' | 'two' — matches the CHECK constraint
-      windows: windowsNum,
-      skylights: skylightsNum,
-      interior,
-      estimate: total,
-      notes: notes || null,
+      },
+      lead: {
+        name,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        service: "residential-window-washing",
+        source: "website",
+        stories,              // 'one' | 'two' — matches the CHECK constraint
+        windows: windowsNum,
+        skylights: skylightsNum,
+        interior,
+        estimate: total,
+        notes: notes || null,
+      },
     });
 
-    // Fire both at once; neither waits on the other.
-    const [web3Result, dbResult] = await Promise.allSettled([web3Submit, dbSubmit]);
-
-    const web3Ok = web3Result.status === "fulfilled" && web3Result.value?.success;
-    const dbOk = dbResult.status === "fulfilled" && !dbResult.value?.error;
-
-    // Log failures quietly for debugging, without alarming the customer.
-    if (!dbOk) console.error("Supabase insert failed:", dbResult);
-    if (!web3Ok) console.error("Web3Forms failed:", web3Result);
-
-    if (web3Ok || dbOk) {
+    if (ok) {
       // As long as the lead landed somewhere, the customer succeeded.
       setStatus("sent");
-
-      // Google Ads conversion — fires only on a real successful quote submission
-      if (typeof window.gtag === "function") {
-        window.gtag("event", "conversion", {
-          send_to: "AW-18343098144/c22yCJXTmNUcEKDu1apE",
-        });
-      }
+      trackQuoteConversion();
     } else {
       // Both paths failed — route them to call/text.
       setStatus("idle");

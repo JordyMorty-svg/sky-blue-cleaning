@@ -1,15 +1,15 @@
-
-
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import "./Navbar.css";
 import logoMark from "../../assets/logo-mark-3.png";
 
+// Section links point at the homepage anchors, so they work from any page.
 const links = [
-  { label: "Home", href: "#home" },
-  { label: "Services", href: "#services" },
-  { label: "About", href: "#about" },
-  { label: "Reviews", href: "#reviews" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", to: "/" },
+  { label: "Services", to: "/#services" },
+  { label: "About", to: "/#about" },
+  { label: "Reviews", to: "/#reviews" },
+  { label: "Contact", to: "/#contact" },
 ];
 
 function Navbar() {
@@ -21,25 +21,25 @@ function Navbar() {
 
   return (
     <nav className="navbar">
-      <a href="#home" className="navbar__logo" onClick={closeMenu}>
+      <Link to="/" className="navbar__logo" onClick={closeMenu}>
         <img className="navbar__icon" src={logoMark} alt="" />
         <span className="navbar__name">
           Sky Blue <span className="navbar__name-accent">Cleaning Co.</span>
         </span>
-      </a>
+      </Link>
 
       {/* Desktop links */}
       <ul className="navbar__links">
         {links.map((link) => (
-          <li key={link.href}>
-            <a href={link.href}>{link.label}</a>
+          <li key={link.to}>
+            <Link to={link.to}>{link.label}</Link>
           </li>
         ))}
       </ul>
 
-      <a href="#quote" className="navbar__button">
+      <Link to="/#quote" className="navbar__button">
         Get a Free Quote
-      </a>
+      </Link>
 
       {/* Mobile hamburger */}
       <button
@@ -62,16 +62,16 @@ function Navbar() {
       >
         <ul className="navbar__menu-links">
           {links.map((link) => (
-            <li key={link.href}>
-              <a href={link.href} onClick={closeMenu}>
+            <li key={link.to}>
+              <Link to={link.to} onClick={closeMenu}>
                 {link.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
-        <a href="#quote" className="navbar__menu-button" onClick={closeMenu}>
+        <Link to="/#quote" className="navbar__menu-button" onClick={closeMenu}>
           Get a Free Quote
-        </a>
+        </Link>
       </div>
     </nav>
   );

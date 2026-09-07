@@ -41,10 +41,15 @@
 }
 
 .services__card {
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 32px 28px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -52,6 +57,22 @@
   transform: translateY(-4px);
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
   border-color: transparent;
+}
+
+.services__card-link {
+  margin-top: auto;
+  padding-top: 18px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.2s ease;
+}
+
+.services__card:hover .services__card-link {
+  gap: 11px;
 }
 
 .services__icon {
