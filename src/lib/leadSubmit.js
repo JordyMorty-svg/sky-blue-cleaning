@@ -4,7 +4,11 @@ import { supabase } from "../supabaseClient";
 export const CONTACT = {
   phoneDisplay: "(541) 730-3593",
   phoneDigits: "15417303593", // for tel:/sms: links, no spaces
-  email: "skybluecleaninggco@gmail.com",
+  // The address customers see and reply to. Shown in the footer and on both
+  // quote forms as a mailto link; it is NOT where lead notifications are
+  // delivered — Web3Forms sends those to whatever address its access key is
+  // registered to, which is configured in the Web3Forms account, not here.
+  email: "company@skybluecleaningco.com",
 };
 
 const WEB3FORMS_ACCESS_KEY = "4da845f5-1959-4972-8192-e060287fc8b2";
