@@ -20,6 +20,43 @@ export const CONTACT = {
 const WEB3FORMS_ACCESS_KEY = "4da845f5-1959-4972-8192-e060287fc8b2";
 
 /*
+ * Insert the lead, and survive a column the table doesn't have.
+ *
+ * Column names must match the leads table exactly, and a single wrong one
+ * fails the whole insert — so a lead would reach the notification email and
+ * never reach the CRM, which is the worst of both worlds because it looks
+ * like it worked.
+ *
+ * That is not hypothetical: `latitude` and `longitude` were added to this
+ * payload when the address field started returning coordinates, and they are
+ * only present on the table because the CRM's map already used them. A
+ * future field could easily be added here first and migrated later.
+ *
+ * So an "undefined column" error is treated as recoverable: PostgREST names
+ * the offending column in its message, it gets dropped, and the insert is
+ * retried once. A missing coordinate is a detail. A missing lead is a job.
+ */
+async function insertLead(lead) {
+  const first = await supabase.from("leads").insert(lead);
+  if (!first?.error) return first;
+
+  const message = String(first.error.message || "");
+  // e.g. `column "latitude" of relation "leads" does not exist`
+  const missing = message.match(/column "([^"]+)"/i)?.[1];
+
+  if (first.error.code !== "42703" && !/does not exist/i.test(message)) return first;
+  if (!missing || !(missing in lead)) return first;
+
+  console.error(`leads has no "${missing}" column — retrying without it`);
+  // Built by copying rather than destructuring the key out: a discarded
+  // binding trips no-unused-vars, and silencing the rule to delete a key is
+  // a worse trade than three plain lines.
+  const rest = { ...lead };
+  delete rest[missing];
+  return supabase.from("leads").insert(rest);
+}
+
+/*
  * Sends a lead down both paths at once:
  *   - Web3Forms  -> emails the lead to the business inbox
  *   - Supabase   -> writes the lead row into the CRM `leads` table
@@ -43,8 +80,7 @@ export async function submitLead({ emailFields, lead }) {
     }),
   }).then((r) => r.json());
 
-  // Column names must match the leads table exactly.
-  const dbSubmit = supabase.from("leads").insert(lead);
+  const dbSubmit = insertLead(lead);
 
   const [web3Result, dbResult] = await Promise.allSettled([web3Submit, dbSubmit]);
 

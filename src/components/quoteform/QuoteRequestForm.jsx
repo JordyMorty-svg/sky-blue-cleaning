@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./QuoteForm.css";
 import { CONTACT, submitLead, trackQuoteConversion } from "../../lib/leadSubmit";
+import AddressField from "./AddressField";
 
 const { phoneDisplay: PHONE_DISPLAY, phoneDigits: PHONE_DIGITS, email: EMAIL } = CONTACT;
 
@@ -18,6 +19,9 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  // Set only when an address is picked from Google's list. Null means the
+  // address was typed and never verified, which the CRM map can see.
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent
@@ -59,6 +63,8 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
         phone: phone || null,
         email: email || null,
         address: address || null,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         service: service.slug,
         source: "website",
         // Matches the CRM's residential/commercial split (leads.property_type).
@@ -173,17 +179,14 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
               </div>
 
               <div className="quote__field">
-                <label className="quote__label" htmlFor="rq-address">
-                  {businessInquiry ? "Property address" : "Address"}{" "}
-                  <span className="quote__optional">(optional)</span>
-                </label>
-                <input
+                <AddressField
                   id="rq-address"
-                  type="text"
-                  className="quote__input"
+                  label={businessInquiry ? "Property address" : "Address"}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="123 Main St, Corvallis"
+                  onChange={setAddress}
+                  onSelect={({ latitude, longitude }) =>
+                    setCoords({ latitude, longitude })
+                  }
                 />
               </div>
 

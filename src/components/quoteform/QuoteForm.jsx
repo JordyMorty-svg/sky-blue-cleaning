@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./QuoteForm.css";
 import { CONTACT, submitLead, trackQuoteConversion } from "../../lib/leadSubmit";
+import AddressField from "./AddressField";
 
 /* ---- Your pricing (edit these numbers any time) ---- */
 const PRICING = {
@@ -23,6 +24,8 @@ function QuoteForm() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  // See QuoteRequestForm: null unless picked from Google's list.
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent
@@ -112,6 +115,8 @@ function QuoteForm() {
         phone: phone || null,
         email: email || null,
         address: address || null,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         service: "residential-window-washing",
         source: "website",
         property_type: "residential",
@@ -346,14 +351,14 @@ function QuoteForm() {
               </div>
 
               <div className="quote__field">
-                <label className="quote__label" htmlFor="q-address">Address <span className="quote__optional">(optional)</span></label>
-                <input
+                <AddressField
                   id="q-address"
-                  type="text"
-                  className="quote__input"
+                  label="Address"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="123 Main St, Corvallis"
+                  onChange={setAddress}
+                  onSelect={({ latitude, longitude }) =>
+                    setCoords({ latitude, longitude })
+                  }
                 />
               </div>
 
