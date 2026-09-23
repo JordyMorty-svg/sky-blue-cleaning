@@ -33,6 +33,19 @@
       content="Family-run window washing serving Corvallis and the Willamette Valley. Fully insured — get a free instant quote."
     />
     <meta property="og:type" content="website" />
+
+    <!--
+      Two things are deliberately NOT written here:
+
+      * The LocalBusiness structured data. vite-plugin-seo.js injects it at
+        build time from src/data/services.jsx and src/data/business.js, so it
+        can never list a service the site doesn't have.
+
+      * A canonical link tag. This file is served for EVERY route, so a
+        canonical here would tell Google each service page is a copy of the
+        homepage. src/lib/usePageMeta.js sets the right one per page instead.
+        Please don't add one back.
+    -->
   </head>
   <body>
     <div id="root"></div>

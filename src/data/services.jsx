@@ -4,6 +4,11 @@
  * Used by:
  *   - components/services/Services.jsx  (the homepage card grid)
  *   - pages/ServiceDetail.jsx           (the per-service info + quote page)
+ *   - vite-plugin-seo.js                (the sitemap and structured data, at
+ *                                        build time — it reads `slug` and
+ *                                        `title` straight out of this file,
+ *                                        so keep each on one line as
+ *                                        `slug: "..."` / `title: "..."`)
  *
  * `quote` picks which quote experience the detail page shows:
  *   "estimator"  -> the live window-pricing estimator (residential windows)
@@ -66,6 +71,8 @@ export const services = [
   {
     slug: "residential-window-washing",
     title: "Residential Window Washing",
+    metaDescription:
+      "Residential window washing in Corvallis, OR. Exterior glass hand-detailed, sills and tracks cleared, screens scrubbed. Get a free instant estimate online.",
     card: "Interior and exterior glass, sills, and tracks left spotless, inside and out, top to bottom.",
     icon: icons.residential,
     quote: "estimator",
@@ -86,6 +93,8 @@ export const services = [
   {
     slug: "commercial-window-washing",
     title: "Commercial Window Washing",
+    metaDescription:
+      "Commercial window cleaning in Corvallis for storefronts, offices and multi-story glass. Weekly, monthly or one-time, scheduled around your hours.",
     card: "Storefronts, offices, and multi-story glass kept crystal clear on a schedule that works for you.",
     icon: icons.commercial,
     quote: "commercial",
@@ -106,6 +115,8 @@ export const services = [
   {
     slug: "gutter-cleaning",
     title: "Gutter Cleaning",
+    metaDescription:
+      "Gutter cleaning in Corvallis, OR. Leaves and debris cleared by hand, downspouts flushed, and everything bagged and hauled away. Request a free quote.",
     card: "We clear out leaves and debris so water flows where it should, and stays off your foundation.",
     icon: icons.gutter,
     quote: "request",
@@ -126,6 +137,8 @@ export const services = [
   {
     slug: "screen-cleaning-repair",
     title: "Screen Cleaning & Repair",
+    metaDescription:
+      "Window screen cleaning and repair in Corvallis, OR. Screens scrubbed and re-fitted, torn mesh patched or re-screened. Request a free quote.",
     card: "Screens washed, re-fitted, and patched up so they actually keep the bugs out again.",
     icon: icons.screen,
     quote: "request",
@@ -146,6 +159,8 @@ export const services = [
   {
     slug: "pressure-washing",
     title: "Pressure Washing",
+    metaDescription:
+      "Pressure washing in Corvallis, OR for driveways, siding, decks and patios. Moss and grime lifted, soft-wash for delicate surfaces. Request a free quote.",
     card: "Driveways, siding, decks, and walkways blasted back to like-new, grime, moss, and all.",
     icon: icons.pressure,
     quote: "request",
@@ -166,6 +181,8 @@ export const services = [
   {
     slug: "solar-panel-cleaning",
     title: "Solar Panel Cleaning",
+    metaDescription:
+      "Solar panel cleaning in Corvallis, OR with pure water and a soft, no-scratch touch. Restore the output dust and pollen take. Request a free quote.",
     card: "Dust and grime off your panels so they soak up sun and pull maximum power all year.",
     icon: icons.solar,
     quote: "request",
@@ -188,3 +205,30 @@ export const services = [
 export const serviceBySlug = Object.fromEntries(
   services.map((s) => [s.slug, s])
 );
+
+/*
+ * The <title> for a service page.
+ *
+ * The town is in it on purpose. "Gutter Cleaning — Sky Blue Cleaning Co." says
+ * what the page is about but not where, and for a local business the where is
+ * most of the search: people type "gutter cleaning corvallis", not "gutter
+ * cleaning". The title is the strongest on-page signal Google has for
+ * matching those two.
+ *
+ * The service and the town lead, the brand trails. Google cuts titles off at
+ * roughly 60 characters, and the longest one here runs a little over — so if
+ * anything gets truncated to "…", it's the brand name, which the result
+ * already shows beside the URL.
+ *
+ * Each service also carries a hand-written `metaDescription` (the grey text
+ * under the link in a search result). Written rather than cut from `intro`
+ * because a sentence chopped at 155 characters reads as broken, and every one
+ * names Corvallis for the same reason the title does. Keep them under ~155.
+ *
+ * Adding a service here is all it takes — the sitemap and the structured data
+ * Google reads are both generated from this file at build time (see
+ * vite-plugin-seo.js), so there is no second list to forget to update.
+ */
+export function serviceTitle(service) {
+  return `${service.title} in Corvallis, OR — Sky Blue Cleaning Co.`;
+}

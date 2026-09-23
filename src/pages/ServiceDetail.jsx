@@ -1,22 +1,26 @@
-import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import "./ServiceDetail.css";
-import { services, serviceBySlug } from "../data/services";
+import { services, serviceBySlug, serviceTitle } from "../data/services";
 import QuoteForm from "../components/quoteform/QuoteForm";
 import QuoteRequestForm from "../components/quoteform/QuoteRequestForm";
+import { usePageMeta } from "../lib/usePageMeta";
 
 function ServiceDetail() {
   const { slug } = useParams();
   const service = serviceBySlug[slug];
 
-  useEffect(() => {
-    if (service) {
-      document.title = `${service.title} — Sky Blue Cleaning Co.`;
-    }
-    return () => {
-      document.title = "Sky Blue Cleaning Co.";
-    };
-  }, [service]);
+  // Called before the not-found return below, as hooks must be. An unknown
+  // slug still renders with a 200 (there is no server to send a 404), so it
+  // is marked noindex rather than left for Google to report as a soft 404.
+  usePageMeta(
+    service
+      ? {
+          title: serviceTitle(service),
+          description: service.metaDescription,
+          path: `/services/${service.slug}`,
+        }
+      : { title: "Page not found — Sky Blue Cleaning Co.", noindex: true }
+  );
 
   // Unknown slug — keep it friendly and route people back to the services.
   if (!service) {
