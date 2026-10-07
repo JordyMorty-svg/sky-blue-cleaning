@@ -19,6 +19,7 @@ import { renderToString } from "react-dom/server";
 import { StaticRouter } from "react-router";
 import App from "./App.jsx";
 import { services } from "./data/services";
+import { LEGAL_PAGES } from "./data/legal";
 import { metaForPath } from "./lib/pageMeta";
 import { BUSINESS } from "./data/business";
 
@@ -38,7 +39,15 @@ export const NOT_FOUND_ROUTE = "/__not-found__";
  * them — there is no second list to forget.
  */
 export function routes() {
-  return ["/", ...services.map((s) => `/services/${s.slug}`)];
+  return [
+    "/",
+    ...services.map((s) => `/services/${s.slug}`),
+    // Prerendered like everything else. public/_redirects sends any URL
+    // without a real file to /not-found.html, so a route missing from this
+    // list is a route that serves "we couldn't find that service" — which for
+    // the privacy policy means Google's reviewer is shown a 404 page.
+    ...LEGAL_PAGES.map((p) => `/${p.slug}`),
+  ];
 }
 
 /**

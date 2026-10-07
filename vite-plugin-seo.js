@@ -24,6 +24,7 @@ import { fileURLToPath } from "node:url";
 import { BUSINESS } from "./src/data/business.js";
 // Imported, not typed again. The whole point of src/lib/analytics.js.
 import { GOOGLE_ADS_ID } from "./src/lib/analytics.js";
+import { LEGAL_PAGES } from "./src/data/legal.js";
 
 const SERVICES_FILE = fileURLToPath(new URL("./src/data/services.jsx", import.meta.url));
 
@@ -74,7 +75,13 @@ const serviceUrl = (business, slug) => `${business.url}/services/${slug}`;
  * and teach Google to ignore it.
  */
 export function sitemapXml(services, business = BUSINESS) {
-  const urls = [`${business.url}/`, ...services.map((s) => serviceUrl(business, s.slug))];
+  const urls = [
+    `${business.url}/`,
+    ...services.map((s) => serviceUrl(business, s.slug)),
+    // Generated from the same list the routes and the prerenderer use, so a
+    // legal page cannot exist and be missing from the sitemap.
+    ...LEGAL_PAGES.map((p) => `${business.url}/${p.slug}`),
+  ];
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -166,6 +173,34 @@ export default function seo() {
 
     transformIndexHtml() {
       const tags = [
+        // THE TITLE AND DESCRIPTION, which nothing was emitting.
+        //
+        // index.html carries a comment saying both are "INSERTED here at
+        // build time, from homeTitle / homeDescription in business.js" — and
+        // nothing was doing the inserting. The file has no <title> of its
+        // own, so the built site shipped every page without one, and
+        // vite-plugin-prerender's injectInto() replaces a <title> rather than
+        // creating one, so the per-route titles had nothing to replace and
+        // were silently dropped too.
+        //
+        // Six service pages, each written to rank for its own search, all
+        // sharing no title at all. verify/seo.mjs has been failing on
+        // "homepage keeps its title" throughout.
+        //
+        // Injected here rather than typed into index.html because the running
+        // app needs the same two strings — usePageMeta() restores them when a
+        // visitor navigates back to the homepage — and two copies is how they
+        // come to disagree.
+        {
+          tag: "title",
+          children: BUSINESS.homeTitle,
+          injectTo: "head",
+        },
+        {
+          tag: "meta",
+          attrs: { name: "description", content: BUSINESS.homeDescription },
+          injectTo: "head",
+        },
         {
           tag: "script",
           attrs: { type: "application/ld+json" },

@@ -1,0 +1,54 @@
+/* The legal pages.
+   Narrow measure and generous line height: these are the only pages on the
+   site somebody reads top to bottom rather than scans, and the rest of the
+   site's full-width layout makes a wall of text nobody finishes. */
+.legal {
+  padding: 96px 16px 72px;
+  background: #fff;
+}
+
+.legal__inner {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.legal__title {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  line-height: 1.15;
+  margin: 0 0 8px;
+  color: #10243b;
+}
+
+.legal__updated {
+  margin: 0 0 28px;
+  font-size: 0.9rem;
+  color: #5a6472;
+}
+
+.legal__intro {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: #2d3845;
+  margin: 0 0 40px;
+}
+
+.legal__section {
+  margin-bottom: 36px;
+}
+
+.legal__heading {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin: 0 0 12px;
+  color: #10243b;
+}
+
+.legal__body {
+  margin: 0 0 14px;
+  line-height: 1.75;
+  color: #3a4654;
+}
+
+.legal__body:last-child {
+  margin-bottom: 0;
+}

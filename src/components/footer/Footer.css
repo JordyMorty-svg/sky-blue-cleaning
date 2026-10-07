@@ -108,3 +108,19 @@
     transition: none;
   }
 }
+/* The legal links in the bottom bar. Quiet, but present on every page —
+   Google's OAuth policy wants the privacy policy reachable from the
+   homepage, and "reachable" means a link somebody can actually find. */
+.footer__legal {
+  margin: 6px 0 0;
+}
+
+.footer__legal a {
+  color: inherit;
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.footer__legal a:hover {
+  opacity: 1;
+}

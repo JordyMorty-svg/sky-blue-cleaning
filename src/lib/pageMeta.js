@@ -17,6 +17,7 @@
  */
 
 import { serviceBySlug, serviceTitle } from "../data/services";
+import { legalBySlug } from "../data/legal";
 
 /*
  * An unknown URL answers 200 — there is no server to send a 404 — so Google
@@ -46,6 +47,22 @@ export function metaForPath(pathname) {
   // written once, in index.html, and nothing here restates them — so there is
   // only ever one place to change the sentence that shows up in Google.
   if (path === "/") return { path: "/" };
+
+  // THE LEGAL PAGES, before the service lookup.
+  //
+  // Without this they fall through to NOT_FOUND, which carries noindex — and
+  // the prerenderer writes whatever this function says into the static HTML.
+  // Google's OAuth review fetches the privacy policy URL; serving it with
+  // noindex and no canonical would be telling Google to ignore the page it
+  // was sent to read.
+  const legal = legalBySlug[path.slice(1)];
+  if (legal) {
+    return {
+      title: legal.metaTitle,
+      description: legal.metaDescription,
+      path: `/${legal.slug}`,
+    };
+  }
 
   const match = /^\/services\/([^/]+)$/.exec(path);
   let slug = null;

@@ -58,6 +58,15 @@ function Footer() {
 
       <div className="footer__bottom">
         <p>&copy; {new Date().getFullYear()} Sky Blue Cleaning Co. All rights reserved.</p>
+        {/* THE PRIVACY LINK IS NOT DECORATION. Google's OAuth policy requires
+            the privacy policy to be linked from the app's homepage, and the
+            footer is on every page — so the homepage carries it without a
+            second place to remember. */}
+        <p className="footer__legal">
+          <Link to="/privacy">Privacy Policy</Link>
+          <span aria-hidden="true"> &middot; </span>
+          <Link to="/terms">Terms of Service</Link>
+        </p>
       </div>
     </footer>
   );
