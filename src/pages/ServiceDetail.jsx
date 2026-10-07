@@ -1,26 +1,27 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import "./ServiceDetail.css";
-import { services, serviceBySlug, serviceTitle } from "../data/services";
+import { services, serviceBySlug } from "../data/services";
 import QuoteForm from "../components/quoteform/QuoteForm";
 import QuoteRequestForm from "../components/quoteform/QuoteRequestForm";
 import { usePageMeta } from "../lib/usePageMeta";
+import { metaForPath } from "../lib/pageMeta";
 
 function ServiceDetail() {
   const { slug } = useParams();
+  const { pathname } = useLocation();
   const service = serviceBySlug[slug];
 
   // Called before the not-found return below, as hooks must be. An unknown
-  // slug still renders with a 200 (there is no server to send a 404), so it
-  // is marked noindex rather than left for Google to report as a soft 404.
-  usePageMeta(
-    service
-      ? {
-          title: serviceTitle(service),
-          description: service.metaDescription,
-          path: `/services/${service.slug}`,
-        }
-      : { title: "Page not found — Sky Blue Cleaning Co.", noindex: true }
-  );
+  // slug still renders with a 200 (there is no server to send a 404), so
+  // metaForPath marks it noindex rather than leaving Google to report a soft
+  // 404.
+  //
+  // The tags come from the PATH, not from `service`, because the build needs
+  // the same answer and all it has is a path. vite-plugin-prerender.js writes
+  // whatever metaForPath says into the static HTML; this sets the same thing
+  // once React mounts. One function, so the HTML and the JavaScript can't
+  // contradict each other.
+  usePageMeta(metaForPath(pathname));
 
   // Unknown slug — keep it friendly and route people back to the services.
   if (!service) {

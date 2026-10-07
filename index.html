@@ -3,12 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- 
-    <title>Sky Blue Cleaning Co. - Window Washing in Corvallis, OR</title>
-    <meta
-      name="description"
-      content="Family-run window washing serving Corvallis and the Willamette Valley. Residential and commercial windows, gutters, screens, and more. Fully insured — get a free instant quote."
-    />
+
+    <!--
+      The <title> and the description are INSERTED here at build time, from
+      homeTitle / homeDescription in src/data/business.js. They are not
+      written in this file any more.
+
+      Not for tidiness — the running app needs the same two strings. When a
+      visitor clicks Home from a service page, something has to put the
+      homepage's title back, and before prerendering that something read it
+      off the document, because index.html was served for every URL so the
+      document always had it. Now every page ships its own title and that
+      trick reads the wrong one. Stated once in business.js, both the build
+      and the app use the same words and there is nothing to drift.
+    -->
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18343098144"></script>
@@ -20,31 +28,48 @@
       gtag('config', 'AW-18343098144');
     </script>
 
- 
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
- 
-    <!-- Social sharing (Open Graph) -->
-    <meta property="og:title" content="Sky Blue Cleaning Co. - Window Washing in Corvallis, OR" />
-    <meta
-      property="og:description"
-      content="Family-run window washing serving Corvallis and the Willamette Valley. Fully insured — get a free instant quote."
-    />
-    <meta property="og:type" content="website" />
 
     <!--
-      Two things are deliberately NOT written here:
+      Social sharing (Open Graph). og:title and og:description are inserted
+      alongside the title above; the rest are the same for every page.
+
+      Without an image, sharing the site in a text message or on Facebook
+      produces a bare grey box with a line of text — which is what it did for
+      a year. Nothing renders JavaScript when it builds a link preview, so
+      these have to be in the static HTML.
+
+      Absolute URLs, not paths: a preview scraper has no base to resolve
+      "/og-card.png" against.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://skybluecleaningco.com/" />
+    <meta property="og:image" content="https://skybluecleaningco.com/og-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sky Blue Cleaning Co." />
+    <meta property="og:site_name" content="Sky Blue Cleaning Co." />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter reads og:* for everything except the card shape. -->
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      Two more things are deliberately NOT written here:
 
       * The LocalBusiness structured data. vite-plugin-seo.js injects it at
         build time from src/data/services.jsx and src/data/business.js, so it
         can never list a service the site doesn't have.
 
-      * A canonical link tag. This file is served for EVERY route, so a
-        canonical here would tell Google each service page is a copy of the
-        homepage. src/lib/usePageMeta.js sets the right one per page instead.
-        Please don't add one back.
+      * A canonical link tag. This file is the template every prerendered page
+        is cut from, so a canonical here would be copied onto all six service
+        pages claiming each one is the homepage. vite-plugin-prerender.js
+        writes the right one into each page afterwards, and usePageMeta.js
+        keeps it right as you navigate. Please don't add one back.
     -->
   </head>
   <body>
@@ -52,4 +77,3 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
- 

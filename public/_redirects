@@ -1,1 +1,15 @@
-/*    /index.html   200
+# Netlify serves a real file whenever one exists, and falls back to this rule
+# when none does. Every route the site has now ships as a real file — the
+# build prerenders them — so this rule only ever catches URLs that aren't
+# pages: old links, typos, scanners.
+#
+# It used to point at /index.html, which was right when index.html was an
+# empty shell and JavaScript decided what the page was. Now index.html IS the
+# homepage, markup and all, so sending an unknown URL there would serve the
+# homepage's words and the homepage's canonical tag under a nonsense address —
+# and Google would be told that address is the homepage.
+#
+# /not-found.html is the same app rendered on its "we couldn't find that
+# service" route, carrying noindex and no canonical. Same 200, same screen a
+# visitor gets today; it just stops claiming to be a page that exists.
+/*    /not-found.html   200
