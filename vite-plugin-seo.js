@@ -22,6 +22,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { BUSINESS } from "./src/data/business.js";
+// Imported, not typed again. The whole point of src/lib/analytics.js.
+import { GOOGLE_ADS_ID } from "./src/lib/analytics.js";
 
 const SERVICES_FILE = fileURLToPath(new URL("./src/data/services.jsx", import.meta.url));
 
@@ -151,40 +153,6 @@ export function jsonForScript(value) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
-/**
- * Write the homepage's title and description into index.html.
- *
- * They are stated in business.js, not in index.html, because the running app
- * needs the same two strings — see the long note next to them. This is the
- * build's half of that arrangement.
- *
- * Inserted rather than substituted: index.html has no <title> of its own to
- * replace, so there is no stale copy sitting in the file looking authoritative.
- */
-export function applyHomeMeta(html, business = BUSINESS) {
-  const esc = (s) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-  // Comments stripped first. index.html explains in a comment that the title
-  // is inserted here — and the first version of this check read that comment
-  // as a title and failed the build.
-  if (/<title>/i.test(html.replace(/<!--[\s\S]*?-->/g, ""))) {
-    throw new Error(
-      "vite-plugin-seo: index.html already has a <title>. It should not — the " +
-        "homepage's title comes from homeTitle in src/data/business.js, so that " +
-        "the app and the build can't disagree about it."
-    );
-  }
-
-  const tags =
-    `<title>${esc(business.homeTitle)}</title>\n` +
-    `    <meta name="description" content="${esc(business.homeDescription)}" />\n` +
-    `    <meta property="og:title" content="${esc(business.homeTitle)}" />\n` +
-    `    <meta property="og:description" content="${esc(business.homeDescription)}" />\n`;
-
-  return html.replace("</head>", `  ${tags}  </head>`);
-}
-
 export default function seo() {
   const load = () => readServices(readFileSync(SERVICES_FILE, "utf8"));
 
@@ -196,18 +164,47 @@ export default function seo() {
       this.addWatchFile(SERVICES_FILE);
     },
 
-    transformIndexHtml(html) {
-      return {
-        html: applyHomeMeta(html),
-        tags: [
-          {
-            tag: "script",
-            attrs: { type: "application/ld+json" },
-            children: jsonForScript(localBusinessJsonLd(load())),
-            injectTo: "head",
+    transformIndexHtml() {
+      const tags = [
+        {
+          tag: "script",
+          attrs: { type: "application/ld+json" },
+          children: jsonForScript(localBusinessJsonLd(load())),
+          injectTo: "head",
+        },
+      ];
+
+      // THE GOOGLE TAG, from the one place the account is named.
+      //
+      // Typed into index.html before, and typed again into leadSubmit.js as
+      // half of the conversion target. The two drifted the moment a second
+      // Ads account existed, and the only symptom was a campaign that spent
+      // money and reported nothing. Read from src/lib/analytics.js now, so
+      // the page and the conversion are the same account by construction.
+      //
+      // Skipped entirely when no ID is set, rather than emitting a tag with
+      // an empty id that 404s on every page load.
+      if (GOOGLE_ADS_ID) {
+        tags.push({
+          tag: "script",
+          attrs: {
+            async: true,
+            src: `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`,
           },
-        ],
-      };
+          injectTo: "head",
+        });
+        tags.push({
+          tag: "script",
+          children:
+            "window.dataLayer = window.dataLayer || [];\n" +
+            "function gtag(){dataLayer.push(arguments);}\n" +
+            "gtag('js', new Date());\n" +
+            `gtag('config', '${GOOGLE_ADS_ID}');`,
+          injectTo: "head",
+        });
+      }
+
+      return tags;
     },
 
     generateBundle() {

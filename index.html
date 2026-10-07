@@ -18,15 +18,17 @@
       and the app use the same words and there is nothing to drift.
     -->
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18343098144"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+    <!--
+      The Google tag is INSERTED here at build time, from GOOGLE_ADS_ID in
+      src/lib/analytics.js. It is not written in this file any more.
 
-      gtag('config', 'AW-18343098144');
-    </script>
+      Same reasoning as the title above, and a more expensive lesson. The ID
+      used to be typed here and the conversion label typed in leadSubmit.js.
+      A new Ads account was set up, this file was never updated, and the
+      campaign spent for weeks reporting nothing — the conversion was being
+      sent to an account the page had stopped loading. Stated once, the two
+      cannot disagree.
+    -->
 
 
     <!-- Favicons -->

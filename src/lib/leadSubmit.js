@@ -1,4 +1,7 @@
 import { supabase } from "../supabaseClient";
+// The Ads account and the conversion label live in one place — see the
+// header of that file for what happened when they lived in two.
+import { leadConversionTarget } from "./analytics";
 import { BUSINESS } from "../data/business";
 
 /* ---- Business contact info (shared across every quote surface) ----
@@ -96,9 +99,33 @@ export async function submitLead({ emailFields, lead }) {
 
 /* Fires the Google Ads conversion — only call on a real successful submit. */
 export function trackQuoteConversion() {
-  if (typeof window !== "undefined" && typeof window.gtag === "function") {
-    window.gtag("event", "conversion", {
-      send_to: "AW-18343098144/c22yCJXTmNUcEKDu1apE",
-    });
+  // NOT SET UP YET. Reported once rather than silently doing nothing: a
+  // conversion that never fires and a conversion that fires into a dead
+  // account look identical from Google Ads, and both read as "nobody
+  // converted". See src/lib/analytics.js.
+  const target = leadConversionTarget();
+  if (!target) {
+    if (!warned) {
+      warned = true;
+      console.warn(
+        "[analytics] a quote was submitted but no conversion was reported — " +
+          "LEAD_CONVERSION_LABEL is not set in src/lib/analytics.js"
+      );
+    }
+    return;
   }
+
+  // typeof checks, not optional chaining. This site prerenders, so `window`
+  // genuinely does not exist at build time — and in the browser gtag is
+  // missing whenever an ad blocker has eaten googletagmanager.com, which is
+  // common enough that it must not throw inside a submit handler and leave
+  // the customer looking at an error for a request that went through.
+  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+
+  window.gtag("event", "conversion", { send_to: target });
 }
+
+// Module-scope, so a second submission in the same session does not print it
+// again. One line in the console is a note; one per submit is noise somebody
+// learns to scroll past.
+let warned = false;
