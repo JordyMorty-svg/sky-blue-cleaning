@@ -1,0 +1,181 @@
+/* The full-screen photo viewer. See Lightbox.jsx for why it is portalled. */
+
+.lb {
+  position: fixed;
+  inset: 0;
+  /* Above everything, including the sticky navbar. */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  /* Not pure black. A hair of blue keeps it in the same world as the rest
+     of the site, and 0.9 rather than 1 leaves enough of the page showing
+     through at the edges to say "this is a layer, not a new screen". */
+  background: rgba(8, 15, 30, 0.9);
+  backdrop-filter: blur(6px);
+  animation: lb-in 140ms ease-out;
+}
+
+@keyframes lb-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lb__figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  /* The figure is only as big as its contents, so the backdrop click area
+     is everything around the photo rather than a full-width invisible box
+     that swallows the taps meant to close it. */
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* BOUNDED BY THE VIEWPORT, both ways.
+
+   A portrait phone photo at natural size is taller than any laptop screen,
+   and a lightbox you have to scroll is a worse view of the picture than
+   the thumbnail was. object-fit: contain means the whole frame is always
+   visible — nothing is cropped by the act of enlarging it. */
+.lb__img {
+  display: block;
+  max-width: min(1100px, 100%);
+  /* Leaves room for the caption under it. */
+  max-height: calc(100vh - 120px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+.lb__caption {
+  max-width: 680px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.lb__count {
+  display: block;
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- the controls --------------------------------------------------------- */
+
+.lb__close,
+.lb__nav {
+  /* 44px, which is the smallest thing a thumb reliably hits. These sit
+     over a photograph, so they are filled rather than outlined — a
+     transparent icon button is invisible against half the images here. */
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.lb__close:hover,
+.lb__nav:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.lb__close:focus-visible,
+.lb__nav:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 3px;
+}
+
+.lb__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+@media (max-width: 640px) {
+  .lb {
+    padding: 12px;
+    gap: 4px;
+  }
+
+  /* THE ARROWS MOVE TO THE BOTTOM CORNERS on a phone. Beside the photo
+     they eat 100px of the only axis a portrait image has to work with, and
+     a thumb reaches the bottom of the screen more easily than the middle
+     of either edge anyway. */
+  .lb__nav {
+    position: absolute;
+    bottom: 16px;
+  }
+
+  .lb__nav--prev { left: 16px; }
+  .lb__nav--next { right: 16px; }
+
+  .lb__img {
+    max-height: calc(100vh - 150px);
+  }
+
+  .lb__caption {
+    /* Clear of the arrows. */
+    padding: 0 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lb {
+    animation-duration: 1ms;
+  }
+}
+
+/* --- what a clickable photo looks like ------------------------------------ */
+
+/* Used by the callers. A photo that opens has to say so before it is
+   clicked — a cursor change is the whole affordance on a desktop, and the
+   slight lift is what hints at it on a trackpad hover. */
+.is-zoomable {
+  cursor: zoom-in;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+  width: 100%;
+  /* The button wrapper must not introduce its own box — the photo's own
+     radius and ratio still do the work. */
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.is-zoomable img {
+  transition: transform 220ms ease;
+}
+
+.is-zoomable:hover img {
+  transform: scale(1.03);
+}
+
+.is-zoomable:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-zoomable img,
+  .is-zoomable:hover img {
+    transition: none;
+    transform: none;
+  }
+}

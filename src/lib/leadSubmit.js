@@ -13,14 +13,15 @@ import { BUSINESS } from "../data/business";
 export const CONTACT = {
   phoneDisplay: BUSINESS.phoneDisplay,
   phoneDigits: BUSINESS.phoneDigits, // for tel:/sms: links, no spaces
-  // The address customers see and reply to. Shown in the footer and on both
-  // quote forms as a mailto link; it is NOT where lead notifications are
-  // delivered — Web3Forms sends those to whatever address its access key is
-  // registered to, which is configured in the Web3Forms account, not here.
+  // The address customers see and reply to, in the footer and on both quote
+  // forms as a mailto link.
+  //
+  // It is NOT where lead notifications go, and nothing on this site decides
+  // that any more. A new lead texts Jordan and Hayden from the CRM's own
+  // sweep — see netlify/lib/leadAlerts.mjs in the CRM repo, and the note on
+  // submitLead below for why it moved there.
   email: BUSINESS.email,
 };
-
-const WEB3FORMS_ACCESS_KEY = "4da845f5-1959-4972-8192-e060287fc8b2";
 
 /*
  * Insert the lead, and survive a column the table doesn't have.
@@ -60,41 +61,80 @@ async function insertLead(lead) {
 }
 
 /*
- * Sends a lead down both paths at once:
- *   - Web3Forms  -> emails the lead to the business inbox
- *   - Supabase   -> writes the lead row into the CRM `leads` table
+ * Writes the lead into the CRM. That is the whole job now, and the reason it
+ * is the whole job is worth the paragraphs.
  *
- * Neither waits on the other. As long as the lead lands SOMEWHERE, the
- * customer's submission counts as a success — one path failing shouldn't
- * cost a real lead.
+ * ---------------------------------------------------------------------------
+ * WHAT USED TO BE HERE
+ * ---------------------------------------------------------------------------
  *
- * @param {object} emailFields  extra fields to include in the Web3Forms email
- * @param {object} lead         the row to insert into the `leads` table
- * @returns {Promise<{ ok: boolean, web3Ok: boolean, dbOk: boolean }>}
+ * Two requests in parallel: this insert, and a POST to api.web3forms.com
+ * whose only purpose was to email the business that a lead had arrived. The
+ * submission counted as a success if EITHER landed, on the reasoning that
+ * one path failing shouldn't cost a real lead.
+ *
+ * On 12 October 2026 the insert landed and the Web3Forms POST did not.
+ * Web3Forms has no record of the request at all, which from the far end is
+ * what a blocked request looks like — that domain is on several ad-blocker
+ * lists. The customer saw the thank-you screen. The lead sat in the CRM.
+ * Nobody was told, and the first contact went out two hours later.
+ *
+ * The dual path was not wrong about leads. It was wrong about WHO IS TOLD:
+ * both halves ran in the customer's browser, so both could be stopped by the
+ * customer's browser, and only one of them was ever going to make a phone
+ * ring.
+ *
+ * ---------------------------------------------------------------------------
+ * WHERE THE NOTIFICATION WENT
+ * ---------------------------------------------------------------------------
+ *
+ * Into the CRM, which already sweeps for new leads every minute to send the
+ * customer "thanks for reaching out". That sweep now texts Jordan and Hayden
+ * too — db/lead-alerts.sql and netlify/lib/leadAlerts.mjs in the CRM repo.
+ *
+ * It is strictly better than what it replaces, in four ways worth naming:
+ *
+ *   * it reads a row that is already committed, so no browser can stop it
+ *   * it covers every source, not just this form — a Google Local Services
+ *     lead is exactly as time-sensitive
+ *   * a failure is visible, in the Netlify log and on the CRM's Undelivered
+ *     page, rather than being a request nobody has a record of
+ *   * it is a text, which makes a phone buzz at nine on a Sunday night the
+ *     way an email never did
+ *
+ * So there is one path, and one third party fewer standing between somebody
+ * filling in this form and somebody calling them back.
+ *
+ * ---------------------------------------------------------------------------
+ * WHICH MAKES THE FAILURE CASE SIMPLER, NOT RISKIER
+ * ---------------------------------------------------------------------------
+ *
+ * `ok` is now just the insert. If it fails, both quote forms already show
+ * the phone number and ask the customer to call or text — which is the
+ * honest outcome and always was the better one. The case this removes is the
+ * silent one: a submission that reported success to the customer and reached
+ * nobody.
+ *
+ * @param {object} lead  the row to insert into the `leads` table
+ * @returns {Promise<{ ok: boolean, error?: unknown }>}
  */
-export async function submitLead({ emailFields, lead }) {
-  const web3Submit = fetch("https://api.web3forms.com/submit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      access_key: WEB3FORMS_ACCESS_KEY,
-      from_name: "Sky Blue Cleaning Co. website",
-      ...emailFields,
-    }),
-  }).then((r) => r.json());
+export async function submitLead({ lead }) {
+  let result;
+  try {
+    result = await insertLead(lead);
+  } catch (err) {
+    // insertLead can reject on a network failure, where PostgREST returning
+    // an error object is the ordinary case. Both are "it didn't land".
+    console.error("Lead insert threw:", err);
+    return { ok: false, error: err };
+  }
 
-  const dbSubmit = insertLead(lead);
+  if (result?.error) {
+    console.error("Supabase insert failed:", result.error);
+    return { ok: false, error: result.error };
+  }
 
-  const [web3Result, dbResult] = await Promise.allSettled([web3Submit, dbSubmit]);
-
-  const web3Ok = web3Result.status === "fulfilled" && web3Result.value?.success;
-  const dbOk = dbResult.status === "fulfilled" && !dbResult.value?.error;
-
-  // Log failures quietly for debugging, without alarming the customer.
-  if (!dbOk) console.error("Supabase insert failed:", dbResult);
-  if (!web3Ok) console.error("Web3Forms failed:", web3Result);
-
-  return { ok: web3Ok || dbOk, web3Ok, dbOk };
+  return { ok: true };
 }
 
 /* Fires the Google Ads conversion — only call on a real successful submit. */

@@ -185,3 +185,43 @@
     transition: none;
   }
 }
+
+/* The before/after takes the slot the video had, at the same size — see
+   .hero__video above. Matching them means swapping one for the other
+   changes nothing about the hero's balance, which is what makes the
+   fallback in Hero.jsx invisible rather than a different-looking page. */
+.hero__ba {
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (max-width: 900px) {
+  .hero__ba {
+    max-width: 340px;
+  }
+}
+
+/* The hero photograph sits exactly where the video did — same width, same
+   3:4 box, same corner radius and shadow — so swapping the media changed
+   the content of the hero and nothing about its proportions. */
+.hero__photo {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 3 / 4;
+  /* See the long note on .work__shot img: the width/height attributes on
+     the tag are a specified height, and a specified height beats
+     aspect-ratio. Without this the hero happened to look right only
+     because 966x1400 is close to 3:4 — it was never obeying the rule. */
+  height: auto;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  background: #eff6ff;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .hero__photo {
+    max-width: 340px;
+  }
+}

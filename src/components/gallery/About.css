@@ -191,3 +191,30 @@
     transition: none;
   }
 }
+
+/* Hayden on a job, under the team cards — see the note in About.jsx.
+
+   CAPPED AND CENTRED rather than full-bleed. A single portrait-ish face
+   stretched across 1100px is a billboard; at 620px it reads as a
+   photograph somebody took at work, which is what it is. */
+.about__onsite {
+  margin: 36px auto 0;
+  max-width: 620px;
+  text-align: center;
+}
+
+.about__onsite img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
+}
+
+.about__onsite figcaption {
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: #64748b;
+}

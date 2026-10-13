@@ -175,6 +175,118 @@
   font-weight: 700;
 }
 
+/* --- the other services ---------------------------------------------------
+   Built from .quote__addon above rather than invented, so the interior
+   tick and these four read as the same kind of control. The differences
+   are deliberate: no price (see the note on EXTRAS in the JSX), a hint
+   line instead, and two columns because four full-width rows would push
+   the running total below the fold on a laptop. */
+
+.quote__extras {
+  border: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.quote__extras-legend {
+  display: block;
+  padding: 0;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.quote__extras-legend .quote__optional {
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* A wrapping row of toggles. Each is a real checkbox with the box itself
+   hidden — the pill IS the control, so it keeps the label association,
+   the tab order, Space to toggle and the focus ring, none of which a
+   styled div has. */
+.quote__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quote__pill {
+  display: inline-flex;
+  align-items: center;
+  /* 40px tall: a thumb target, without the 56px a full card needed. */
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.quote__pill:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+/* Filled when on, not just outlined. A ticked and an unticked pill have to
+   differ by more than a border colour, or nobody can tell at a glance what
+   they have chosen — which is the one thing this control exists to show. */
+.quote__pill--on {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+/* Hidden, not removed: see the note on .quote__pills. */
+.quote__pill input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.quote__pill:has(input:focus-visible) {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* What is NOT in the number above it. Small, grey, and directly under the
+   total, because its whole job is to stop the figure being read as
+   covering the driveway too. */
+.quote__estimate-plus {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+/* The "+ Add skylights" link. A text button, because it reveals a field
+   rather than doing anything — styling it as a button would put a second
+   call to action on a panel that already has the real one at the bottom. */
+.quote__reveal {
+  align-self: flex-start;
+  margin: -8px 0 20px;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.quote__reveal:hover {
+  text-decoration: underline;
+}
+
 /* Estimate readout — the signature moment */
 .quote__estimate {
   background: #0f172a;

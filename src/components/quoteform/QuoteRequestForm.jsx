@@ -45,19 +45,6 @@ function QuoteRequestForm({ service, businessInquiry = false }) {
       .join("\n");
 
     const { ok } = await submitLead({
-      emailFields: {
-        subject: `${businessInquiry ? "Business quote" : "Quote request"} — ${name}${
-          business.trim() ? ` (${business.trim()})` : ""
-        } · ${service.title}`,
-        name,
-        ...(businessInquiry ? { business_name: business.trim() || "—" } : {}),
-        phone: phone || "—",
-        email: email || "—",
-        address: address || "—",
-        service: service.title,
-        property_type: businessInquiry ? "Commercial" : "Residential",
-        notes: notes || "—",
-      },
       lead: {
         name,
         phone: phone || null,

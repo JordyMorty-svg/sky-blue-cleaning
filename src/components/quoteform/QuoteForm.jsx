@@ -3,6 +3,51 @@ import "./QuoteForm.css";
 import { CONTACT, submitLead, trackQuoteConversion } from "../../lib/leadSubmit";
 import AddressField from "./AddressField";
 
+/*
+ * The other services, offered as ticks — with NO PRICE, deliberately.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY NO NUMBERS HERE
+ * ---------------------------------------------------------------------------
+ *
+ * Windows price per unit: a window is a window, so a count and a storey
+ * give a number that is nearly always right. None of these do. From
+ * claude/pricing-reference.md, the real spans are:
+ *
+ *     house wash    $250-800      $0.29-0.35/sq ft of wall
+ *     driveway      $100-300      $0.15-0.75/sq ft, Oregon moss at the top
+ *     deck          $150-500      $0.35/sq ft baseline, more with growth
+ *     gutters       $325 + $150 to scrub, on one large two-storey
+ *
+ * A calculator that turned "pressure washing ✓" into a figure would be
+ * guessing across a 3-5x range, and the guess would be anchored in the
+ * customer's head before anybody had seen the house. The doc is explicit
+ * about this: "Estimate areas off photos only to stop yourself anchoring
+ * low — never as the quote."
+ *
+ * The anchor also runs the wrong way. Quote $150 for a driveway that is
+ * really $300 and the conversation starts from a number Sky Blue has to
+ * argue up; the pricing doc's whole method is the opposite — show the
+ * arithmetic, itemise, and let the customer drop a line rather than
+ * negotiate the total.
+ *
+ * So a tick means "I want this quoted", the window estimate stays exactly
+ * as precise as it was, and the visit prices the rest. That is also what
+ * the page already promises two lines below: a free on-site look.
+ *
+ * WHAT IT IS REALLY FOR. Every one of these is a service the customer
+ * would otherwise have had to telephone about, and most never would. It
+ * reaches Jordan and Hayden in the lead itself — the CRM's new-lead email
+ * prints the notes field — so the on-site visit is booked already knowing
+ * there is a deck and a driveway to look at.
+ */
+const EXTRAS = [
+  { key: "gutters", label: "Gutters", lead: "Gutter cleaning" },
+  { key: "pressure", label: "Pressure washing" },
+  { key: "solar", label: "Solar panels", lead: "Solar panel cleaning" },
+  { key: "screens", label: "Screens", lead: "Screen cleaning & repair" },
+];
+
 /* ---- Your pricing (edit these numbers any time) ---- */
 const PRICING = {
   oneStory: 200,
@@ -18,7 +63,24 @@ function QuoteForm() {
   const [stories, setStories] = useState("one");
   const [windows, setWindows] = useState(10);
   const [skylights, setSkylights] = useState(0);
+  /* HIDDEN UNTIL ASKED FOR. Most houses have no skylights, so a stepper
+     reading 0 was a permanent row of furniture on the one panel where
+     height costs the most. Opened automatically if the count is ever
+     non-zero, so it cannot be left showing a number nobody can see. */
+  const [showSkylights, setShowSkylights] = useState(false);
   const [interior, setInterior] = useState(false);
+  // A Set rather than four booleans: the list above is the single source of
+  // truth, so adding a fifth service is one line there and nothing here.
+  const [extras, setExtras] = useState(() => new Set());
+
+  function toggleExtra(key) {
+    setExtras((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,6 +102,14 @@ function QuoteForm() {
   const skylightsCost = skylightsNum * PRICING.perSkylight;
   const interiorCost = interior ? floors * PRICING.interiorPerFloor : 0;
   const total = base + windowsCost + skylightsCost + interiorCost;
+
+  // Built here rather than inline in the payload: it is read once by the
+  // submit handler and it is easier to see that it is empty when nothing
+  // is ticked, which is what keeps the notes field clean for most leads.
+  const chosenExtras = EXTRAS.filter((x) => extras.has(x.key));
+  const extrasLine = chosenExtras.length
+    ? `Also interested in: ${chosenExtras.map((x) => x.lead || x.label).join(", ")}`
+    : "";
 
   function adjustWindows(delta) {
     setWindows((w) => {
@@ -91,25 +161,6 @@ function QuoteForm() {
     setStatus("sending");
 
     const { ok } = await submitLead({
-      emailFields: {
-        subject: `Quote request — ${name} ($${total})`,
-        name,
-        phone: phone || "—",
-        email: email || "—",
-        address: address || "—",
-        service: "Residential Window Washing",
-        property_type: "Residential",
-        stories: stories === "two" ? "Two story" : "One story",
-        windows: windowsNum,
-        skylights: skylightsNum
-          ? `${skylightsNum} (+$${skylightsCost})`
-          : "None",
-        interior_cleaning: interior
-          ? `Yes — ${floors} floor${floors > 1 ? "s" : ""} (+$${interiorCost})`
-          : "No",
-        estimated_total: `$${total}`,
-        notes: notes || "—",
-      },
       lead: {
         name,
         phone: phone || null,
@@ -125,16 +176,30 @@ function QuoteForm() {
         skylights: skylightsNum,
         interior,
         estimate: total,
-        notes: notes || null,
+        /* THE TICKS RIDE ALONG IN notes, which is not laziness.
+           `leads` has one `service` column and these are not a service —
+           they are four things to look at on the visit. A migration plus
+           CRM display work to store them structurally would be the right
+           answer the day somebody reports on them; today nobody does, and
+           notes is read by a human in the two places that matter: the lead
+           page, and the new-lead email, which prints this field verbatim.
+
+           Labelled "Also interested in:" so it is obviously the form
+           talking and not the customer. */
+        notes: [notes.trim(), extrasLine].filter(Boolean).join("\n\n") || null,
       },
     });
 
     if (ok) {
-      // As long as the lead landed somewhere, the customer succeeded.
+      // The lead is in the CRM. The sweep there texts Jordan and Hayden
+      // within the minute — see submitLead's header for why that stopped
+      // being this page's job.
       setStatus("sent");
       trackQuoteConversion();
     } else {
-      // Both paths failed — route them to call/text.
+      // The insert failed, which is now the only way to get here. Route them
+      // to call or text: better a customer who rings than a customer who
+      // believes a form went through when it did not.
       setStatus("idle");
       setError(
         `Something went wrong sending your request. Please try again, or call/text us at ${PHONE_DISPLAY}.`
@@ -208,39 +273,49 @@ function QuoteForm() {
             </div>
           </div>
 
-          <div className="quote__field">
-            <span className="quote__label">
-              Skylights <span className="quote__optional">(optional)</span>
-            </span>
-            <div className="quote__stepper">
-              <button
-                type="button"
-                className="quote__stepper-btn"
-                onClick={() => adjustSkylights(-1)}
-                aria-label="Fewer skylights"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                inputMode="numeric"
-                className="quote__stepper-input"
-                value={skylights}
-                min="0"
-                max="50"
-                onChange={handleCountChange(setSkylights, 50)}
-                onBlur={handleCountBlur(setSkylights, 0, 50)}
-              />
-              <button
-                type="button"
-                className="quote__stepper-btn"
-                onClick={() => adjustSkylights(1)}
-                aria-label="More skylights"
-              >
-                +
-              </button>
+          {showSkylights || skylightsNum > 0 ? (
+            <div className="quote__field">
+              <span className="quote__label">
+                Skylights <span className="quote__optional">(optional)</span>
+              </span>
+              <div className="quote__stepper">
+                <button
+                  type="button"
+                  className="quote__stepper-btn"
+                  onClick={() => adjustSkylights(-1)}
+                  aria-label="Fewer skylights"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className="quote__stepper-input"
+                  value={skylights}
+                  min="0"
+                  max="50"
+                  onChange={handleCountChange(setSkylights, 50)}
+                  onBlur={handleCountBlur(setSkylights, 0, 50)}
+                />
+                <button
+                  type="button"
+                  className="quote__stepper-btn"
+                  onClick={() => adjustSkylights(1)}
+                  aria-label="More skylights"
+                >
+                  +
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <button
+              type="button"
+              className="quote__reveal"
+              onClick={() => { setShowSkylights(true); setSkylights(1); }}
+            >
+              + Add skylights
+            </button>
+          )}
 
           <label className="quote__addon">
             <input
@@ -256,18 +331,57 @@ function QuoteForm() {
             </span>
           </label>
 
+          {/* ANYTHING ELSE — ticks, no prices. See the note on EXTRAS.
+
+              Placed AFTER the interior add-on and BEFORE the estimate so
+              the running total is still the last thing read before the
+              Send button. Putting unpriced options below the number would
+              make the number look incomplete; above it, they read as
+              "and also these", which is what they are. */}
+          {/* PILLS, NOT CARDS. The first version gave each service a
+              bordered card with a line of explanation under it — 241px on
+              a laptop and 335px on a phone, for four things whose names
+              already say what they are. "Downspouts cleared and flushed"
+              under the word "Gutters" is text nobody needed to read.
+
+              A wrapping row of toggles is a third of the height and reads
+              faster, which matters here more than anywhere else on the
+              page: this block sits between the customer deciding and the
+              Send button. */}
+          <fieldset className="quote__extras">
+            <legend className="quote__extras-legend">
+              Anything else?
+              <span className="quote__optional">priced on the visit</span>
+            </legend>
+            <div className="quote__pills">
+              {EXTRAS.map((x) => (
+                <label
+                  className={`quote__pill${extras.has(x.key) ? " quote__pill--on" : ""}`}
+                  key={x.key}
+                >
+                  <input
+                    type="checkbox"
+                    checked={extras.has(x.key)}
+                    onChange={() => toggleExtra(x.key)}
+                  />
+                  {x.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
           <div className="quote__estimate">
             <div className="quote__estimate-row">
               <span>{stories === "two" ? "Two-story base" : "One-story base"}</span>
               <span>${base}</span>
             </div>
             <div className="quote__estimate-row">
-              <span>{windowsNum} windows × ${PRICING.perWindow}</span>
+              <span>{windowsNum} window{windowsNum === 1 ? "" : "s"} × ${PRICING.perWindow}</span>
               <span>${windowsCost}</span>
             </div>
             {skylightsNum > 0 && (
               <div className="quote__estimate-row">
-                <span>{skylightsNum} skylights × ${PRICING.perSkylight}</span>
+                <span>{skylightsNum} skylight{skylightsNum === 1 ? "" : "s"} × ${PRICING.perSkylight}</span>
                 <span>${skylightsCost}</span>
               </div>
             )}
@@ -278,9 +392,20 @@ function QuoteForm() {
               </div>
             )}
             <div className="quote__estimate-total">
-              <span>Estimated total</span>
+              {/* NAMES THE SERVICE once anything else is ticked. "Estimated
+                  total" beside a list that also mentions a driveway reads
+                  as the total for all of it, and a customer who thinks
+                  $250 covers the pressure washing has been misled by a
+                  label rather than by a price. */}
+              <span>{extras.size > 0 ? "Window cleaning estimate" : "Estimated total"}</span>
               <span className="quote__estimate-number">${total}</span>
             </div>
+            {extras.size > 0 && (
+              <div className="quote__estimate-plus">
+                plus {chosenExtras.map((x) => (x.lead || x.label).toLowerCase()).join(", ")}
+                {" "}— priced when we see it
+              </div>
+            )}
           </div>
           <p className="quote__estimate-note">
             An estimate, not a bill, unusual access or heavy buildup may change it.

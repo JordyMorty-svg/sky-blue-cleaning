@@ -7,6 +7,10 @@ import logoMark from "../../assets/logo-mark-3.png";
 const links = [
   { label: "Home", to: "/" },
   { label: "Services", to: "/#services" },
+  /* BETWEEN SERVICES AND ABOUT, matching where the section actually sits
+     on the page. A nav whose order does not match the page's order makes
+     people scroll looking for something they have already passed. */
+  { label: "Our work", to: "/#work" },
   { label: "About", to: "/#about" },
   { label: "Reviews", to: "/#reviews" },
   { label: "Contact", to: "/#contact" },

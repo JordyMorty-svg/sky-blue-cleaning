@@ -1,7 +1,17 @@
 import "./About.css";
-import haydenWashing from "../../assets/hayden-washing.jpg";
+/* THE PHOTOGRAPH THAT MATCHES THE PARAGRAPH.
+   The text beside this image says "we use water-fed poles to reach
+   second-story windows safely from the ground" and the picture used to be
+   a close crop that showed none of that.
+
+   CROPPED FROM THE BOTTOM, keeping the hand. The frame also contained a
+   nice gable peak, and a centred crop kept the peak and cut the hand —
+   which is keeping the scenery and losing the subject. With the hand in
+   shot the picture is somebody working; without it, it is a house. */
+import haydenWashing from "../../assets/work/pole-second-storey.jpg";
 import haydenPortrait from "../../assets/hayden-portrait.jpg";
 import jordanPortrait from "../../assets/jordan-portrait.jpg";
+import haydenOnSite from "../../assets/work/hayden-on-site.jpg";
 
 const team = [
   {
@@ -36,7 +46,7 @@ function About() {
         <div className="about__story-media">
           <img
             src={haydenWashing}
-            alt="Hayden cleaning a second-story window with a water-fed pole"
+            alt="A hand gripping a water-fed pole extended from the ground to a second-storey window, the brush head washing the glass"
             loading="lazy"
           />
         </div>
@@ -76,6 +86,26 @@ function About() {
           </article>
         ))}
       </div>
+
+      {/* HAYDEN ON A JOB, under the two cards.
+
+          The team cards are headshots — necessary, and the same two
+          photographs every trade website has. This is the one that says
+          the person in the circle above is the person who turns up: same
+          face, outdoors, squeegee in the window behind him.
+
+          One brother and not both because there is only one such photo.
+          Jordan's belongs here the day somebody takes it. */}
+      <figure className="about__onsite">
+        <img
+          src={haydenOnSite}
+          alt="Hayden on a job in Corvallis, a squeegee resting against the window behind him"
+          loading="lazy"
+          width="1500"
+          height="937"
+        />
+        <figcaption>Hayden, mid-job in Corvallis.</figcaption>
+      </figure>
     </section>
   );
 }
