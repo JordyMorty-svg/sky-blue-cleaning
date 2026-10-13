@@ -49,9 +49,35 @@ const EXTRAS = [
 ];
 
 /* ---- Your pricing (edit these numbers any time) ---- */
+/*
+ * Storeys, as a list rather than two buttons.
+ *
+ * THE BASE IS DERIVED, NOT TABULATED. It was `oneStory: 200, twoStory: 300`
+ * — two numbers with the relationship between them left implicit. Written
+ * as a first storey plus $100 for each one above it, the existing prices
+ * come out unchanged ($200 and $300) and a third storey has an answer
+ * without anybody inventing one.
+ *
+ * $400 FOR THREE IS AN EXTRAPOLATION AND SHOULD BE CHECKED. A third storey
+ * is not just more windows: it is a taller pole, often a ladder, and a
+ * different conversation about access. claude/pricing-reference.md puts the
+ * soft-wash practical minimum at "$300 per storey" and warns that an old
+ * house with detailing goes above the band — neither of which is a window
+ * price. If $400 is wrong, STOREY_STEP is the only number to change.
+ *
+ * Three is the ceiling on purpose. Residential Corvallis is one and two
+ * storeys with the occasional three; a four-storey building is commercial,
+ * and commercial is a phone call rather than a calculator.
+ */
+const STOREYS = [
+  { key: "one", label: "One story", floors: 1 },
+  { key: "two", label: "Two story", floors: 2 },
+  { key: "three", label: "Three story", floors: 3 },
+];
+
 const PRICING = {
-  oneStory: 200,
-  twoStory: 300,
+  firstStorey: 200,
+  storeyStep: 100,
   perWindow: 5,
   interiorPerFloor: 100, // interior cleaning is charged per floor
   perSkylight: 15,       // each skylight adds this much
@@ -95,9 +121,12 @@ function QuoteForm() {
   // Inputs can be empty ("") mid-typing; treat that as 0 for the math.
   const windowsNum = windows === "" ? 0 : windows;
   const skylightsNum = skylights === "" ? 0 : skylights;
-  const floors = stories === "two" ? 2 : 1;
+  // Falls back to the first entry rather than to 1, so the list above stays
+  // the only place a storey is defined.
+  const storey = STOREYS.find((x) => x.key === stories) || STOREYS[0];
+  const floors = storey.floors;
 
-  const base = stories === "two" ? PRICING.twoStory : PRICING.oneStory;
+  const base = PRICING.firstStorey + (floors - 1) * PRICING.storeyStep;
   const windowsCost = windowsNum * PRICING.perWindow;
   const skylightsCost = skylightsNum * PRICING.perSkylight;
   const interiorCost = interior ? floors * PRICING.interiorPerFloor : 0;
@@ -110,6 +139,17 @@ function QuoteForm() {
   const extrasLine = chosenExtras.length
     ? `Also interested in: ${chosenExtras.map((x) => x.lead || x.label).join(", ")}`
     : "";
+
+  /* THE STOREY COUNT, IN WORDS, FOR ANYTHING ABOVE TWO.
+     leads.stories has a CHECK constraint written in the Supabase dashboard
+     before db/ existed, so nobody can read which values it allows without
+     querying the live database. If it refuses "three", insertLead drops the
+     column and the lead still lands — but it would land looking like a
+     one-storey house, which is the kind of wrong that sends somebody out
+     with the wrong pole. Writing it here too means the fact survives the
+     column being dropped. Only above two, so an ordinary lead's notes stay
+     clean. */
+  const storeyLine = floors > 2 ? `${storey.label} house` : "";
 
   function adjustWindows(delta) {
     setWindows((w) => {
@@ -186,7 +226,7 @@ function QuoteForm() {
 
            Labelled "Also interested in:" so it is obviously the form
            talking and not the customer. */
-        notes: [notes.trim(), extrasLine].filter(Boolean).join("\n\n") || null,
+        notes: [notes.trim(), storeyLine, extrasLine].filter(Boolean).join("\n\n") || null,
       },
     });
 
@@ -224,20 +264,17 @@ function QuoteForm() {
           <div className="quote__field">
             <span className="quote__label">How many stories?</span>
             <div className="quote__choices">
-              <button
-                type="button"
-                className={`quote__choice ${stories === "one" ? "quote__choice--active" : ""}`}
-                onClick={() => setStories("one")}
-              >
-                One story
-              </button>
-              <button
-                type="button"
-                className={`quote__choice ${stories === "two" ? "quote__choice--active" : ""}`}
-                onClick={() => setStories("two")}
-              >
-                Two story
-              </button>
+              {STOREYS.map((x) => (
+                <button
+                  key={x.key}
+                  type="button"
+                  className={`quote__choice ${stories === x.key ? "quote__choice--active" : ""}`}
+                  onClick={() => setStories(x.key)}
+                  aria-pressed={stories === x.key}
+                >
+                  {x.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -372,7 +409,7 @@ function QuoteForm() {
 
           <div className="quote__estimate">
             <div className="quote__estimate-row">
-              <span>{stories === "two" ? "Two-story base" : "One-story base"}</span>
+              <span>{storey.label} base</span>
               <span>${base}</span>
             </div>
             <div className="quote__estimate-row">

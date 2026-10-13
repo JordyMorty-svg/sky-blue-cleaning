@@ -2,6 +2,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ANCHORS HAVE TO CLEAR THE STICKY HEADER.
+ *
+ * .navbar is position:sticky and 76px tall, and both ways of reaching a
+ * section — a plain #work link and ScrollManager's scrollIntoView — put the
+ * target's top edge at y=0, which is underneath it. Tapping "Our work" in
+ * the menu landed on the section with its eyebrow and the first line of its
+ * heading hidden behind the bar, so the thing you asked for was the one
+ * thing you could not see.
+ *
+ * scroll-margin-top is honoured by both, which is why it is here rather than
+ * an offset calculated in ScrollManager: one declaration fixes every link on
+ * the site, including ones nobody has written yet.
+ *
+ * 76px of navbar plus 16px of breathing room. */
+section[id] {
+  scroll-margin-top: 92px;
+}
+
 body {
   margin: 0;
 }

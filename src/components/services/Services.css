@@ -137,12 +137,87 @@
 
 @media (max-width: 850px) {
   .services {
-    padding: 64px 6%;
+    padding: 56px 6%;
   }
 
+  .services__header {
+    margin-bottom: 36px;
+  }
+
+  /* TWO COLUMNS, NOT ONE, AND THIS IS THE BIGGEST CHANGE ON THE PAGE.
+   *
+   * One card per row was the reflex responsive move and it cost more than
+   * anything else here: six cards at desktop proportions came to 2,385px,
+   * nearly three full phone screens of scrolling between the hero and the
+   * first photograph of actual work. Six services the visitor has to scroll
+   * past one at a time also reads as a longer list than it is.
+   *
+   * A service card is an icon, three words and a sentence. None of that
+   * needs 340px. Two of them side by side at 170px each is a grid somebody
+   * can take in at a glance, which is what the section is for — it is a
+   * menu, not six adverts. */
   .services__grid {
-    grid-template-columns: 1fr;
-    max-width: 480px;
+    grid-template-columns: 1fr 1fr;
+    max-width: 560px;
+  }
+
+  .services__footer {
+    margin-top: 36px;
+    gap: 16px;
+  }
+}
+
+/* --- the compact card ------------------------------------------------------
+ *
+ * Applied below 620px only. Between 620 and 850 the two columns are wide
+ * enough for the full-size card, so it keeps it; this is specifically about
+ * what fits in 170px. Every number here is the desktop one scaled to that
+ * width rather than a different design — same icon, same type hierarchy,
+ * same order. */
+@media (max-width: 620px) {
+  .services__card {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .services__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    margin-bottom: 12px;
+  }
+
+  .services__icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .services__card-title {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin-bottom: 7px;
+  }
+
+  .services__card-copy {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .services__card-link {
+    padding-top: 12px;
+    font-size: 0.84rem;
+  }
+
+  /* "Learn more & get a quote" wraps to three lines in a 170px column and
+     says the same thing as "Learn more". The words are hidden rather than
+     removed from the markup so the desktop card is untouched — see the span
+     in Services.jsx. */
+  .services__card-link-long {
+    display: none;
+  }
+
+  .services__footer-text {
+    font-size: 1rem;
   }
 }
 

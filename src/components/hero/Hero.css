@@ -155,12 +155,12 @@
 
 @media (max-width: 850px) {
   .hero {
-    padding: 64px 6% 80px;
+    padding: 56px 6% 64px;
   }
 
   .hero__inner {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 36px;
   }
 
   .hero__media {
@@ -172,11 +172,39 @@
   }
 
   .hero__actions {
-    margin-bottom: 44px;
+    margin-bottom: 36px;
   }
 
+  /* ONE COLUMN, NOT A WRAPPING ROW.
+   *
+   * These are five claims of five different lengths, and flex-wrap put two
+   * on the first line and one on each of the next three — a ragged shape
+   * that looks like a bug in the layout rather than a list. Nothing is
+   * gained by the two that happen to fit sharing a line, and the eye has to
+   * find the start of each item in a different place.
+   *
+   * A single column puts all five ticks on one vertical line, which is both
+   * tidier and quicker to scan, and costs about 30px of height. */
   .hero__trust {
-    gap: 28px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* The two buttons are different widths because their labels are, and
+   left-aligned at two different widths they look misaligned rather than
+   stacked. Full width on a phone: a deliberate pair, and a bigger target
+   for the one thing this page is asking anybody to do. */
+@media (max-width: 520px) {
+  .hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .hero__button {
+    text-align: center;
   }
 }
 

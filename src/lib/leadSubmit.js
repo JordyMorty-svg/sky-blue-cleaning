@@ -45,20 +45,65 @@ async function insertLead(lead) {
   if (!first?.error) return first;
 
   const message = String(first.error.message || "");
-  // e.g. `column "latitude" of relation "leads" does not exist`
-  const missing = message.match(/column "([^"]+)"/i)?.[1];
+  const code = first.error.code;  // logged, not branched on
 
-  if (first.error.code !== "42703" && !/does not exist/i.test(message)) return first;
-  if (!missing || !(missing in lead)) return first;
+  /* TWO WAYS A SINGLE FIELD CAN SINK A WHOLE LEAD, and both are now
+     survivable.
 
-  console.error(`leads has no "${missing}" column — retrying without it`);
+     42703 — the column does not exist. A field added to this payload
+     before it was migrated. That has happened: latitude and longitude
+     were written here first and only worked because the CRM's map had
+     already added them.
+
+     23514 — a CHECK constraint refused the value. `leads.stories` has one,
+     and it is not in any file in db/ — it was created in the Supabase
+     dashboard before the migrations existed, so nobody can read it without
+     querying the live database. Adding a third storey to the form is
+     exactly the kind of change that trips it.
+
+     THE STAKES WENT UP WHEN WEB3FORMS WENT AWAY. There used to be a second
+     path, so a refused insert still reached somebody by email. Now this is
+     the only path: one bad field and the enquiry is gone, with the customer
+     looking at a "something went wrong" message for a form they filled in
+     correctly.
+
+     So a refusal that names one column drops THAT column and retries. The
+     lead lands missing one detail instead of not landing — and for stories
+     specifically, the quote form also writes the storey count into notes,
+     so even the dropped value survives in a form a person can read. */
+  const culprit = message.match(/column "([^"]+)"/i)?.[1]
+    // Postgres names a check constraint rather than a column: the form's
+    // constraints are named after their column (leads_stories_check), so
+    // the prefix and suffix come off.
+    || message.match(/constraint "leads_([a-z_]+)_check"/i)?.[1];
+
+  /* MATCHED ON THE MESSAGE, NOT THE CODE, and the codes are gone rather
+     than kept "just in case".
+
+     `code === "23514"` was in here beside the message test and mutation
+     testing showed it could be deleted with every assertion still passing.
+     That is not a gap in the tests — it is genuinely dead. Recovering needs
+     the offending column's NAME, and the only place that name appears is
+     the message. A refusal whose message this cannot parse is one this
+     cannot act on, whatever its code says.
+
+     A condition that cannot fail on its own is one nobody can reason
+     about, so it went. */
+  const recoverable =
+    /does not exist/i.test(message) || /violates check constraint/i.test(message);
+
+  if (!recoverable) return first;
+  if (!culprit || !(culprit in lead)) return first;
+
+  console.error(`leads refused "${culprit}" (${code}) — retrying without it`);
   // Built by copying rather than destructuring the key out: a discarded
   // binding trips no-unused-vars, and silencing the rule to delete a key is
   // a worse trade than three plain lines.
   const rest = { ...lead };
-  delete rest[missing];
+  delete rest[culprit];
   return supabase.from("leads").insert(rest);
 }
+
 
 /*
  * Writes the lead into the CRM. That is the whole job now, and the reason it

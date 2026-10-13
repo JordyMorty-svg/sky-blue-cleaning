@@ -166,7 +166,11 @@
 
 @media (max-width: 850px) {
   .about {
-    padding: 64px 6%;
+    padding: 56px 6%;
+  }
+
+  .about__header {
+    margin-bottom: 36px;
   }
 
   .about__story {
@@ -183,6 +187,49 @@
     grid-template-columns: 1fr;
     max-width: 420px;
     gap: 24px;
+  }
+}
+
+/* THE TEAM CARD, CENTRED AT THE TOP.
+ *
+ * On a wide card a 120px circle tucked into the top-left corner is a
+ * portrait with the name beside the text below it. Once the card is the
+ * width of a phone, that same circle leaves two thirds of its own row empty
+ * and the card looks like something failed to load into the gap.
+ *
+ * The avatar, the name and the chips centre; the bio stays left-aligned,
+ * because centred body copy is harder to read and this one runs to six
+ * lines. It is the ordinary shape of a profile card and it has no hole in
+ * it. */
+@media (max-width: 620px) {
+  .about__card-media {
+    width: 104px;
+    height: 104px;
+    margin: 24px auto 0;
+  }
+
+  .about__card-body {
+    padding: 16px 20px 24px;
+  }
+
+  .about__card-head {
+    justify-content: center;
+  }
+
+  /* Centred AND smaller. At the desktop size each chip is wide enough to
+     claim a line of its own, so three facts about one person became three
+     stacked pills and 140px of card. A couple of tenths off the type gets
+     two onto a line and reads as a row of tags again, which is what they
+     are. */
+  .about__chips {
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .about__chip {
+    font-size: 0.75rem;
+    padding: 5px 10px;
   }
 }
 

@@ -254,7 +254,43 @@
 
 @media (max-width: 760px) {
   .work {
-    padding: 64px 0;
+    /* A SIDE GUTTER, WHICH THIS SECTION WAS THE ONLY ONE WITHOUT.
+     *
+     * It was `64px 0`. Every other section on the site is `6%`, so on a
+     * phone this one — and only this one — ran its heading into both screen
+     * edges, bled the photo grid off the sides, and cut the left and right
+     * borders off the two service cards. A bordered card whose border is
+     * past the edge of the screen does not read as full-bleed, it reads as
+     * broken, which is what it looked like in the screenshots.
+     *
+     * 20px rather than 6%, because 6% of a 320px phone is 19px and of a
+     * 760px tablet is 46px — the gutter should not grow with the screen
+     * when the content inside it is already capped. */
+    padding: 56px 20px;
+  }
+
+  /* Tighter than the desktop 56px. These are gaps between a photo and the
+     label of the next group of photos; at phone width 56px of white reads
+     as the section having ended. */
+  .work__header {
+    margin-bottom: 32px;
+  }
+
+  .work__subhead {
+    margin-top: 36px;
+  }
+
+  .work__also {
+    margin-top: 36px;
+  }
+
+  /* A 21px-tall link is a fine thing to click with a mouse and a poor
+     thing to hit with a thumb. The padding is below it rather than around
+     it, so the card's text block keeps its spacing and the target grows
+     into the gap that was already there. */
+  .work__card-link {
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 
   /* THE BEFORE/AFTER STAYS TWO COLUMNS ON A PHONE. Stacking them is the

@@ -24,8 +24,15 @@ function Services() {
             <span className="services__icon">{service.icon}</span>
             <h3 className="services__card-title">{service.title}</h3>
             <p className="services__card-copy">{service.card}</p>
+            {/* SPLIT SO THE PHONE CAN DROP THE TAIL. At two cards to a
+                row the full phrase wraps to three lines and pushes every
+                card taller than the thing it is labelling; "Learn more →"
+                says as much. Hidden in CSS rather than swapped in JS so
+                there is one card component and not two, and so the
+                prerendered HTML is the same either way. */}
             <span className="services__card-link">
-              Learn more &amp; get a quote <span aria-hidden="true">→</span>
+              Learn more<span className="services__card-link-long"> &amp; get a quote</span>{" "}
+              <span aria-hidden="true">→</span>
             </span>
           </Link>
         ))}

@@ -6,8 +6,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
+  /* OPAQUE, AND IT HAS TO BE.
+   *
+   * This was rgba(255,255,255,0.92) with a blur behind it, and on a phone
+   * the page read straight through the header: scroll a section heading
+   * under the bar and "Commercial window washing" sits there in ghost grey
+   * behind the logo. Two reasons it looked fine in development and not on
+   * Jordan's iPhone — Safari needs -webkit-backdrop-filter, so iOS dropped
+   * the blur entirely and left only the 8% transparency; and even where the
+   * blur does apply, 8px is not enough to stop 2rem bold type being legible.
+   *
+   * A frosted bar is a nice effect over a photograph. Over body copy it is
+   * just a bar you can see through, and the fix for that is not more blur. */
+  background: #ffffff;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -185,6 +196,32 @@
     border-radius: 999px;
     text-decoration: none;
     font-weight: 700;
+  }
+}
+
+/* THE HEADER DOES NOT FIT AN iPhone SE.
+ *
+ * At 320px the 6% padding, the 40px mark, "Sky Blue Cleaning Co." set at
+ * 1.1rem with white-space:nowrap, and a 44px hamburger add up to about
+ * 2px more than the screen — so the whole page scrolled sideways, which on
+ * a phone is the kind of fault you feel (every vertical swipe drifts) long
+ * before you can see what is causing it.
+ *
+ * The padding goes to a fixed 14px and the mark and the name each come
+ * down a notch. Nothing is dropped: an SE user gets the same header as
+ * everybody else, slightly smaller, rather than a truncated one. */
+@media (max-width: 360px) {
+  .navbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .navbar__icon {
+    height: 34px;
+  }
+
+  .navbar__name {
+    font-size: 1rem;
   }
 }
 

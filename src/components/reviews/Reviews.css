@@ -126,7 +126,11 @@
 
 @media (max-width: 850px) {
   .reviews {
-    padding: 64px 6%;
+    padding: 56px 6%;
+  }
+
+  .reviews__header {
+    margin-bottom: 36px;
   }
 
   .reviews__grid {

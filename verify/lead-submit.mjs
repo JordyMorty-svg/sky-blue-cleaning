@@ -96,11 +96,19 @@ console.log("\n-- one path, and it is the one that matters --\n");
       "dead network — the second is exactly the case where the customer " +
       "most needs to be told to ring instead");
 
-  chk("the missing-column retry survives",
-    /42703/.test(lib) && /retrying without it/.test(lib),
-    "a field added to this payload before it is migrated used to cost the " +
-      "whole insert. That guard is now the only thing between a new column " +
-      "and a lost lead, because there is no second path to catch it");
+  // ASSERTS THE MECHANISM, NOT A CONSTANT. This used to grep for "42703",
+  // which stopped being in the code the day the matching moved from the
+  // error code to the message — the behaviour was identical and the check
+  // failed anyway. A test that breaks when a correct refactor lands is a
+  // test people learn to edit rather than read.
+  chk("the retry-on-refusal guard survives",
+    /does not exist/i.test(lib) &&
+      /violates check constraint/i.test(lib) &&
+      /retrying without it/.test(lib),
+    "a field added to this payload before it is migrated, or refused by a " +
+      "CHECK nobody can read, used to cost the whole insert. That guard is " +
+      "now the only thing between one bad field and a lost lead, because " +
+      "there is no second path to catch it");
 }
 
 console.log("\n-- and it is RUN, not just read --\n");
@@ -211,6 +219,50 @@ console.log("\n-- and it is RUN, not just read --\n");
         "it is migrated used to cost the whole lead, and with Web3Forms " +
         "gone there is no second path to catch it. A missing coordinate " +
         "is a detail; a missing lead is a job");
+
+    // THE CONSTRAINT NOBODY CAN READ. leads.stories has a CHECK made in the
+    // Supabase dashboard before db/ existed, and offering a third storey on
+    // the form is exactly what trips it. Before this branch, a 23514 was an
+    // unrecoverable error and the whole enquiry was lost — which only
+    // became fatal when Web3Forms went away and this became the only path.
+    mod.__set({
+      error: {
+        code: "23514",
+        message: 'new row for relation "leads" violates check constraint "leads_stories_check"',
+      },
+    });
+    const refused = await mod.submitLead({
+      lead: { ...lead, stories: "three", notes: "Three story house" },
+    });
+    chk("THE POINT: a CHECK violation drops that field and the lead still lands",
+      mod.inserts.length === 2 &&
+        mod.inserts[0].stories === "three" &&
+        !("stories" in mod.inserts[1]) &&
+        mod.inserts[1].name === "Kristina",
+      "tried " + mod.inserts.length + " times — a constraint written in a " +
+        "dashboard two years ago must not be able to swallow an enquiry " +
+        "whole. The storey count is in notes as well, so dropping the " +
+        "column loses the filter, not the fact");
+
+    chk("...and the constraint name is parsed back to its column",
+      !("stories" in mod.inserts[1]),
+      "Postgres names the CONSTRAINT, not the column — leads_stories_check " +
+        "— so the prefix and suffix have to come off or nothing is dropped " +
+        "and the retry fails identically");
+
+    // A REFUSAL NAMING SOMETHING THIS FORM NEVER SENT. Dropping a key the
+    // payload does not have is a no-op, so retrying would be a second
+    // round trip that fails identically — and would report the SECOND
+    // error, which may be less informative than the first.
+    mod.__set({
+      error: { code: "42703", message: 'column "tenant_id" of relation "leads" does not exist' },
+    });
+    const unrelated = await mod.submitLead({ lead });
+    chk("THE POINT: a refusal naming a field we did not send is not retried",
+      mod.inserts.length === 1 && unrelated.ok === false,
+      "tried " + mod.inserts.length + " times — `culprit in lead` is what " +
+        "stops a pointless second insert, and the first error is the one " +
+        "worth logging");
 
     chk("...and a retry that also fails is still a failure",
       retried.ok === false,

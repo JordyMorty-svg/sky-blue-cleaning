@@ -1,0 +1,98 @@
+/* The phone-only quote bar. See StickyCta.jsx for when it shows and why. */
+
+/* PHONES ONLY, AND HIDDEN BY DEFAULT RATHER THAN SHOWN BY DEFAULT.
+   Above 760px the navbar already carries the quote button at all times, so
+   there is nothing for this to add; the display:none here is the whole
+   desktop behaviour. */
+.stickycta {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .stickycta {
+    display: flex;
+    gap: 10px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Under the lightbox (1000) and the navbar (1000), over everything on
+       the page. A photo opened full screen must cover this, or there is a
+       Get a free quote button floating on top of the photograph. */
+    z-index: 900;
+    padding: 10px 16px;
+    /* THE HOME INDICATOR. On an iPhone the bottom 34px of the screen
+       belongs to the system gesture bar, and a button that ends at bottom:0
+       is a button sitting under it — tappable in theory, swiped away in
+       practice. env() is 0 on everything else, so this costs nothing
+       elsewhere. */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    /* Upward, so the bar reads as sitting on top of the page rather than
+       being part of it. */
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.1);
+    transition: transform 220ms ease, visibility 220ms;
+  }
+
+  .stickycta--hidden {
+    /* 110%, not 100% — the shadow is outside the box and at exactly 100%
+       a grey smudge stays visible along the bottom edge. */
+    transform: translateY(110%);
+    visibility: hidden;
+  }
+
+  .stickycta__call,
+  .stickycta__quote {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* 50px tall. The 44px minimum is the smallest a thumb reliably hits;
+       this is the one control on the page somebody uses while walking. */
+    min-height: 50px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  /* NARROW, AND SECONDARY ON PURPOSE. Some people would rather phone than
+     fill in a form and the number should be one tap away — but the page
+     spent ten screens building up to the quote form, so the call button
+     takes the space it needs for a word and the rest goes to the quote. */
+  .stickycta__call {
+    flex: 0 0 auto;
+    padding: 0 20px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .stickycta__quote {
+    flex: 1 1 auto;
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  }
+
+  .stickycta__call:active {
+    background: #f1f5f9;
+  }
+
+  .stickycta__quote:active {
+    background: #1d4ed8;
+  }
+
+  .stickycta__call:focus-visible,
+  .stickycta__quote:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stickycta {
+    transition: none;
+  }
+}

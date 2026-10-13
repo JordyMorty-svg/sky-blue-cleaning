@@ -450,12 +450,35 @@
 
 @media (max-width: 850px) {
   .quote {
-    padding: 64px 6%;
+    padding: 56px 6%;
+  }
+
+  .quote__header {
+    margin-bottom: 32px;
   }
 
   .quote__grid {
     grid-template-columns: 1fr;
     max-width: 480px;
+  }
+}
+
+/* AFTER the block above, deliberately. Both set padding on .quote with the
+   same specificity, so the later one wins — this was first written above
+   the other and silently lost, which is why the measured padding did not
+   change. Media queries do not add specificity; only order decides.
+
+   The panel's 28px of side padding is 16% of a 350px card: the fields
+   inside end up narrower than the gutter around them. 18px gives the phone
+   number input back about 20px. */
+@media (max-width: 620px) {
+  .quote__panel {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .quote__field {
+    margin-bottom: 18px;
   }
 }
 
