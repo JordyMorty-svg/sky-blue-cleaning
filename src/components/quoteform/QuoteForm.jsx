@@ -50,36 +50,63 @@ const EXTRAS = [
 
 /* ---- Your pricing (edit these numbers any time) ---- */
 /*
- * Storeys, as a list rather than two buttons.
+ * Storeys: the base price, the button, and the words for everywhere else.
  *
- * THE BASE IS DERIVED, NOT TABULATED. It was `oneStory: 200, twoStory: 300`
- * — two numbers with the relationship between them left implicit. Written
- * as a first storey plus $100 for each one above it, the existing prices
- * come out unchanged ($200 and $300) and a third storey has an answer
- * without anybody inventing one.
+ * ---------------------------------------------------------------------------
+ * THE BASE IS A TABLE AGAIN, AND THAT IS THE CORRECTION
+ * ---------------------------------------------------------------------------
  *
- * $400 FOR THREE IS AN EXTRAPOLATION AND SHOULD BE CHECKED. A third storey
- * is not just more windows: it is a taller pole, often a ladder, and a
- * different conversation about access. claude/pricing-reference.md puts the
- * soft-wash practical minimum at "$300 per storey" and warns that an old
- * house with detailing goes above the band — neither of which is a window
- * price. If $400 is wrong, STOREY_STEP is the only number to change.
+ * This started as `oneStory: 200, twoStory: 300` — two numbers with the
+ * relationship between them unstated. Adding a third storey, it was rewritten
+ * as `firstStorey + (floors - 1) * storeyStep`, which reproduced $200 and
+ * $300 exactly and handed three an answer of $400 without anybody choosing
+ * it. That was flagged at the time as an extrapolation to be checked.
+ *
+ * It was checked, and it was wrong — not in the arithmetic but in the
+ * premise. A formula with one step says every floor costs the same to add.
+ * It does not. Going from one storey to two is a longer pole. Going from
+ * two to three is a ladder, a spotter, and a conversation about access.
+ * Industry per-pane pricing says the same thing in its own units: roughly
+ * +$2-4 a pane for a second storey and +$4-8 for a third, a step that
+ * doubles rather than repeats.
+ *
+ * So the prices are stated, one per storey, and the shape of the increase
+ * is visible: +$100, then +$200. A false linearity encoded in a formula is
+ * worse than a table, because the table is at least honest that somebody
+ * decided each number.
+ *
+ * The sense check is Krueger (claude/pricing-reference.md): a large two-
+ * storey, windows in and out with frames, sills, screens and tracks, $705.
+ * A 32-window three-storey here comes out at $660 exterior and $960 with
+ * the interior — above the large two-storey, which is the right way round.
+ * At $400 it came out at $560, which was below it, and that was the tell.
+ *
+ * ---------------------------------------------------------------------------
+ * TWO LABELS, NOT ONE
+ * ---------------------------------------------------------------------------
+ *
+ * `label` is the button and it is one word, because three buttons have to
+ * sit on one row on a phone and "One story / Two story / Three story"
+ * repeats a word the question above them has already said. `noun` is for
+ * everywhere the words have to stand alone with no question above them —
+ * the estimate line, and the storey count written into the lead's notes,
+ * where "Three house" would be nonsense.
  *
  * Three is the ceiling on purpose. Residential Corvallis is one and two
  * storeys with the occasional three; a four-storey building is commercial,
  * and commercial is a phone call rather than a calculator.
  */
 const STOREYS = [
-  { key: "one", label: "One story", floors: 1 },
-  { key: "two", label: "Two story", floors: 2 },
-  { key: "three", label: "Three story", floors: 3 },
+  { key: "one", label: "One", noun: "One story", floors: 1, base: 200 },
+  { key: "two", label: "Two", noun: "Two story", floors: 2, base: 300 },
+  { key: "three", label: "Three", noun: "Three story", floors: 3, base: 500 },
 ];
 
 const PRICING = {
-  firstStorey: 200,
-  storeyStep: 100,
   perWindow: 5,
-  interiorPerFloor: 100, // interior cleaning is charged per floor
+  interiorPerFloor: 100, // interior cleaning is charged per floor, and this
+                         // one IS linear — an interior floor is an interior
+                         // floor, however high off the ground it is
   perSkylight: 15,       // each skylight adds this much
 };
 
@@ -126,7 +153,7 @@ function QuoteForm() {
   const storey = STOREYS.find((x) => x.key === stories) || STOREYS[0];
   const floors = storey.floors;
 
-  const base = PRICING.firstStorey + (floors - 1) * PRICING.storeyStep;
+  const base = storey.base;
   const windowsCost = windowsNum * PRICING.perWindow;
   const skylightsCost = skylightsNum * PRICING.perSkylight;
   const interiorCost = interior ? floors * PRICING.interiorPerFloor : 0;
@@ -149,7 +176,7 @@ function QuoteForm() {
      with the wrong pole. Writing it here too means the fact survives the
      column being dropped. Only above two, so an ordinary lead's notes stay
      clean. */
-  const storeyLine = floors > 2 ? `${storey.label} house` : "";
+  const storeyLine = floors > 2 ? `${storey.noun} house` : "";
 
   function adjustWindows(delta) {
     setWindows((w) => {
@@ -262,8 +289,15 @@ function QuoteForm() {
         {/* ---- Estimator ---- */}
         <div className="quote__panel">
           <div className="quote__field">
-            <span className="quote__label">How many stories?</span>
-            <div className="quote__choices">
+            {/* LABELLED AS A GROUP, and this became necessary with the
+                one-word buttons rather than being an oversight before.
+                "One story" announced itself; "One" does not — a screen
+                reader read the three buttons as One, Two, Three with no
+                indication of what was being counted. role="group" plus
+                aria-labelledby ties the question to them, so it is
+                announced as "How many stories? group, One, pressed". */}
+            <span className="quote__label" id="q-stories-label">How many stories?</span>
+            <div className="quote__choices" role="group" aria-labelledby="q-stories-label">
               {STOREYS.map((x) => (
                 <button
                   key={x.key}
@@ -409,7 +443,7 @@ function QuoteForm() {
 
           <div className="quote__estimate">
             <div className="quote__estimate-row">
-              <span>{storey.label} base</span>
+              <span>{storey.noun} base</span>
               <span>${base}</span>
             </div>
             <div className="quote__estimate-row">

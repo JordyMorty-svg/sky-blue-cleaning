@@ -72,15 +72,29 @@
   color: #94a3b8;
 }
 
-/* Story choice buttons */
+/* Story choice buttons.
+
+   THREE ACROSS, EQUAL WIDTHS. Two columns left the third storey wrapping
+   onto a row of its own, which reads as a different kind of option rather
+   than the third of three — and an odd button on a second row is how a
+   choice ends up looking like an afterthought.
+
+   The labels are one word each for the same reason (see STOREYS in the
+   JSX): "One story / Two story / Three story" across a 245px phone panel
+   does not fit in one row at any padding worth having, and the question
+   directly above them already says "stories". */
 .quote__choices {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .quote__choice {
-  padding: 14px;
+  /* Narrower side padding than the 14px it had at two columns. The grid
+     sets the width, so this only decides how close the word may come to
+     the border — and at a third of a phone panel, 14px a side is most of
+     the button. */
+  padding: 14px 8px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;

@@ -367,6 +367,126 @@ console.log("\n-- the sticky quote bar knows where it is --\n");
 }
 
 // ---------------------------------------------------------------------------
+console.log("\n-- the storey picker --\n");
+
+// HERE RATHER THAN IN A PRICING TEST, because the one-word labels exist for
+// a phone: three buttons have to share one row inside a 245px panel, and
+// that constraint is only true at this width. The price checks ride along
+// because clicking the buttons is how you see either, and because the
+// labels and the prices are the same four lines of STOREYS — an edit to one
+// is an edit to the other.
+{
+  const page = await phone(320);
+
+  const picker = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll(".quote__choice")];
+    const tops = new Set(btns.map((b) => Math.round(b.getBoundingClientRect().top)));
+    return {
+      n: btns.length,
+      labels: btns.map((b) => b.textContent.trim()),
+      rows: tops.size,
+      // LINES, COUNTED, NOT WIDTH COMPARED. The first version of this
+      // measured scrollWidth against clientWidth, and a mutant that put
+      // "Three story" back in the button sailed through it: text does not
+      // overflow its box, it WRAPS, so the widths still agreed while the
+      // button quietly grew a second line. A Range over the button's
+      // contents returns one client rect per line, which is the thing
+      // actually being asked about.
+      lines: btns.map((b) => {
+        const r = document.createRange();
+        r.selectNodeContents(b);
+        return { text: b.textContent.trim(), n: r.getClientRects().length };
+      }),
+      clipped: btns.filter((b) => b.scrollWidth > b.clientWidth + 1).map((b) => b.textContent.trim()),
+      shortest: Math.min(...btns.map((b) => Math.round(b.getBoundingClientRect().height))),
+      labelledBy: document.querySelector(".quote__choices")?.getAttribute("aria-labelledby"),
+    };
+  });
+
+  chk("THE POINT: all three storeys sit on one row at 320px",
+    picker.n === 3 && picker.rows === 1,
+    `${picker.n} buttons on ${picker.rows} row(s) — a lone third button on a ` +
+      "second row reads as a different kind of option rather than the third " +
+      "of three");
+
+  const wrapped = picker.lines.filter((l) => l.n !== 1);
+  chk("...each label on a single line",
+    wrapped.length === 0 && picker.clipped.length === 0,
+    (wrapped.map((l) => `${JSON.stringify(l.text)} takes ${l.n} lines`).join("; ") ||
+      `clipped: ${picker.clipped.join(", ")}`) +
+      " — this is what one-word labels are for: a two-line button in a " +
+      "75px column is how the long labels failed before");
+
+  // The buttons used to say "One story". They say "One", so the question
+  // above them is the only thing that says what is being counted — and a
+  // screen reader only reaches it if it is tied to the group.
+  chk("...and the group carries the question as its label",
+    picker.labelledBy === "q-stories-label",
+    `aria-labelledby is ${JSON.stringify(picker.labelledBy)} — without it a ` +
+      "screen reader announces One, Two, Three and never says of what");
+
+  // Read off the rendered estimate, not off the source: this is the number
+  // the customer sees, and a label and a price that disagree is worse than
+  // either being wrong alone.
+  const bases = [];
+  for (let i = 0; i < 3; i++) {
+    const row = await page.evaluate((n) => {
+      document.querySelectorAll(".quote__choice")[n].click();
+      return new Promise((r) => requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          r(document.querySelector(".quote__estimate-row")?.textContent.replace(/\s+/g, " ").trim() || ""))));
+    }, i);
+    bases.push(row);
+  }
+
+  const amounts = bases.map((r) => Number((r.match(/\$(\d+)/) || [])[1]));
+
+  // ONE EQUIVALENT MUTANT, RECORDED RATHER THAN HIDDEN. Changing
+  // `const base = storey.base` to `storey.base || 0` in the component
+  // survives everything here, and correctly so: every entry in STOREYS has
+  // a base, so the fallback never runs. Deleting a base outright — the
+  // fault the fallback would be guarding against — is caught by the next
+  // check, which sees "$NaN" and an unparseable amount.
+  chk("each storey prices its own base",
+    amounts.every((a) => Number.isFinite(a) && a > 0),
+    bases.join(" | ") + " — a missing amount means the picker and the " +
+      "estimate have stopped agreeing on what is selected");
+
+  // THE CHECK THIS SECTION WAS WRITTEN FOR, and it asserts the DECISION
+  // rather than the numbers. The prices are Jordan's to change and a test
+  // that hard-codes 200/300/500 breaks every time he does. What must not
+  // come back is the premise that was wrong: that every floor costs the
+  // same to add. One storey to two is a longer pole; two to three is a
+  // ladder. The old `first + (floors-1) * step` formula could not express
+  // that, priced three at $400, and put a three-storey house below the $705
+  // charged for a large two-storey.
+  const step12 = amounts[1] - amounts[0];
+  const step23 = amounts[2] - amounts[1];
+  // STRICTLY GREATER, and a mutant is why. Written as `>=` this passed
+  // against 200/300/400 — the exact pricing the check exists to prevent,
+  // because a flat $100 step satisfies "not smaller". The claim being made
+  // is that the third storey is MORE work to add than the second, so the
+  // test has to say more, not at-least.
+  chk("THE POINT: the third storey costs more to add than the second",
+    step23 > step12 && step12 > 0,
+    `$${amounts[0]} / $${amounts[1]} / $${amounts[2]} — steps of $${step12} ` +
+      `then $${step23}. A flat step says every floor is the same work, and ` +
+      "it is not: the second is a longer pole, the third is a ladder");
+
+  // "Three story base", not "Three base" and not "undefined base". STOREYS
+  // carries two labels now — one word for the button, the full noun for
+  // everywhere the words stand alone — and the notes written into a lead
+  // use the same noun. Dropping it puts "undefined house" in front of
+  // whoever reads the lead.
+  chk("...and the estimate line names the storey in full",
+    /^Three story base/.test(bases[2]),
+    `the line reads ${JSON.stringify(bases[2])} — the button may be one ` +
+      "word but this line and the lead's notes have no question above them");
+
+  await page.close();
+}
+
+// ---------------------------------------------------------------------------
 console.log("\n-- things a thumb has to hit --\n");
 
 {
