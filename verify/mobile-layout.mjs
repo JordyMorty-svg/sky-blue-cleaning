@@ -222,12 +222,27 @@ console.log("\n-- anchors clear the sticky header --\n");
 
   // Both ways of reaching a section — a plain #hash and ScrollManager's
   // scrollIntoView — put the target's top edge at y=0, which is behind the
-  // sticky navbar. scroll-margin-top is what moves it clear, and it is one
-  // declaration in index.css covering every section, so one of them failing
-  // means all of them have.
+  // sticky navbar. scroll-margin-top is what moves it clear.
+  //
+  // THE LIST IS READ OFF THE PAGE'S OWN LINKS, not written out here, and
+  // that is the whole point of this version. The hand-written list said
+  // services, work, quote, about, reviews — six destinations out of seven.
+  // The seventh was #contact, which is <footer id="contact"> and therefore
+  // not matched by `section[id]`, so tapping Contact in the menu landed
+  // with the footer logo behind the header. The check could not fail on it
+  // because nobody had told the check it existed.
+  //
+  // Asking the page which anchors it offers means the next id somebody adds
+  // is covered the day they add it, and an anchor pointing at nothing is
+  // caught as well.
   const landed = await page.evaluate(async () => {
+    const ids = [...new Set(
+      [...document.querySelectorAll('a[href*="#"]')]
+        .map((a) => (a.getAttribute("href") || "").split("#")[1])
+        .filter((h) => h && h !== "")
+    )];
     const out = [];
-    for (const id of ["services", "work", "quote", "about", "reviews"]) {
+    for (const id of ids) {
       const el = document.getElementById(id);
       if (!el) { out.push({ id, missing: true }); continue; }
       el.scrollIntoView({ block: "start", behavior: "instant" });
@@ -241,8 +256,15 @@ console.log("\n-- anchors clear the sticky header --\n");
     return out;
   });
 
-  const buried = landed.filter((l) => l.missing || l.top < l.navBottom);
-  chk("THE POINT: a link to a section lands below the navbar, not under it",
+  chk("every in-page link points at something that exists",
+    landed.length > 0 && !landed.some((l) => l.missing),
+    landed.filter((l) => l.missing).map((l) => `#${l.id}`).join(", ") +
+      " is linked from the page and is not on it" +
+      (landed.length === 0 ? "no in-page anchors found at all — the selector " +
+        "that collects them has stopped matching" : ""));
+
+  const buried = landed.filter((l) => !l.missing && l.top < l.navBottom);
+  chk(`THE POINT: all ${landed.length} in-page anchors land below the navbar`,
     buried.length === 0,
     buried.map((l) => l.missing ? `#${l.id} does not exist` :
       `#${l.id} lands at ${l.top}px with the navbar ending at ${l.navBottom}px`).join("; ") +
@@ -397,6 +419,12 @@ console.log("\n-- things a thumb has to hit --\n");
     const sels = [
       ".hero__button", ".services__cta", ".navbar__toggle", ".quote__choice",
       ".quote__stepper-btn", ".work__card-link", ".footer__links a",
+      // Both added after mutants walked straight past them: shrinking the
+      // footer's call button to 18px and stripping the legal links back to
+      // 15px were changes this check was supposed to be about and did not
+      // see, because a selector list only covers what somebody remembered
+      // to put in it.
+      ".footer__call", ".footer__legal a",
     ];
     const out = [];
     for (const sel of sels) {

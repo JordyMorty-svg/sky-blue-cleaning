@@ -15,8 +15,21 @@ html {
  * an offset calculated in ScrollManager: one declaration fixes every link on
  * the site, including ones nobody has written yet.
  *
- * 76px of navbar plus 16px of breathing room. */
-section[id] {
+ * 76px of navbar plus 16px of breathing room.
+ *
+ * THE FOOTER IS IN THE LIST BECAUSE IT IS AN ANCHOR TARGET. The navbar's
+ * "Contact" item points at /#contact and #contact is <footer id="contact">,
+ * not a <section> — so the original selector covered six destinations out
+ * of seven, and the seventh landed with the logo behind the header. It read
+ * as a cropped image rather than as a scroll position, which is why it
+ * survived a round of looking at screenshots.
+ *
+ * The real guard is in verify/mobile-layout.mjs, which now collects the
+ * targets by reading the page's own links instead of being told what they
+ * are. A list written by hand is a list that goes stale the first time
+ * somebody adds an id. */
+section[id],
+footer[id] {
   scroll-margin-top: 92px;
 }
 

@@ -44,8 +44,16 @@ function Hero() {
             <a href="#quote" className="hero__button hero__button--primary">
               Get a Free Quote
             </a>
-            <a href="#about" className="hero__button hero__button--ghost">
-              Meet the team
+            {/* THE SECOND BUTTON POINTS AT THE PHOTOGRAPHS, not at the
+                bios. "Meet the team" sent somebody who was not ready to
+                ask for a price down to two portraits and a paragraph —
+                pleasant, and not evidence of anything. The question in
+                their head at this point is "are these two any good", and
+                the answer to that is the wall of before-and-afters in
+                #work. About is still a tap away in the nav and in the
+                footer for anybody who wants it. */}
+            <a href="#work" className="hero__button hero__button--ghost">
+              See our work
             </a>
           </div>
 

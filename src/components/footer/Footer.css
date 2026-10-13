@@ -69,6 +69,24 @@
   color: #94a3b8;
 }
 
+/* On a laptop this is just the first link in the Contact column and is
+   styled to match the ones under it — the button treatment is a phone
+   thing and lives in the mobile block below. */
+.footer__call {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.footer__call:hover {
+  color: #60a5fa;
+}
+
 .footer__bottom {
   max-width: 1100px;
   margin: 0 auto;
@@ -103,19 +121,118 @@
   }
 }
 
-/* The footer link columns are 17px-tall lines 12px apart — fine to click,
-   awkward to tap, and the two things people reach for down here are a
-   phone number and the privacy link. Trading the gap for padding makes
-   each row a 37px target and leaves the column exactly as tall as it was,
-   so nothing about the footer's proportions changes. */
+/* ---------------------------------------------------------------------------
+   THE PHONE FOOTER
+   ---------------------------------------------------------------------------
+
+   One column of four stacked blocks came to about 1,150px — nearly a screen
+   and a half of footer under a page that was already ten screens long, and
+   every link in it was a 17px line of grey text 12px from the next one.
+
+   Three changes, in order of how much they are worth:
+
+   1. CONTACT COMES FIRST and the number is a button. Somebody who has
+      scrolled this far is not looking for the sitemap.
+   2. EXPLORE IS A ROW, not five full-width rows holding one word each.
+   3. EVERYTHING IS A TOUCH TIGHTER — rows become 34px tap targets by
+      trading the 12px gap for padding, which costs nothing in height, and
+      the headings and the logo come down a notch.
+
+   What is NOT done here is hiding anything. The services list is six
+   internal links on every page of the site and the tagline is what a
+   search engine reads under the fold; a display:none footer is a tidier
+   page and a worse one. */
 @media (max-width: 760px) {
+  .footer {
+    padding: 44px 6% 24px;
+  }
+
+  .footer__grid {
+    gap: 26px;
+    margin-bottom: 32px;
+  }
+
+  /* ORDER, NOT A REORDERED DOM. The source order is the one that makes
+     sense on a laptop and to a screen reader reading the markup; this is
+     purely about which block a thumb reaches first. */
+  .footer__col--contact { order: 1; }
+  .footer__col--explore { order: 2; }
+  .footer__col--services { order: 3; }
+
+  .footer__logo {
+    width: 104px;
+    margin-bottom: 14px;
+  }
+
+  .footer__tagline {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+
+  .footer__insured {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .footer__heading {
+    margin-bottom: 10px;
+  }
+
+  /* 34px rows out of the same pixels: the 12px gap becomes padding on the
+     link itself, so the column is the height it always was and every row
+     is now a target rather than a line of text with air around it. */
   .footer__links {
     gap: 0;
   }
 
   .footer__links a {
     display: inline-block;
-    padding: 10px 0;
+    padding: 9px 0;
+    font-size: 0.92rem;
+  }
+
+  /* Five one-word links set as five full-width rows is 185px of footer
+     saying Home, Services, Our work, About, Get a Quote. As a wrapping row
+     it is two lines. The 20px column gap is what keeps them separate
+     targets — side by side, the spacing between them is the whole
+     affordance. */
+  .footer__links--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 20px;
+  }
+
+  /* THE ONE THING THIS BLOCK IS FOR. Bordered, full width, 48px tall and
+     at the top of the footer, because "call them" is what the bottom of a
+     window cleaner's website is for. */
+  .footer__call {
+    display: flex;
+    justify-content: center;
+    min-height: 48px;
+    margin-bottom: 14px;
+    padding: 0 16px;
+    border: 1px solid rgba(203, 213, 225, 0.28);
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .footer__call:active {
+    background: rgba(203, 213, 225, 0.12);
+  }
+
+  .footer__bottom {
+    padding-top: 20px;
+  }
+
+  /* 15px of underlined text between two other bits of 15px text. These are
+     the links Google's OAuth policy requires to be reachable, so
+     "reachable" had better include with a thumb. */
+  .footer__legal a {
+    display: inline-block;
+    padding: 9px 2px;
   }
 }
 
