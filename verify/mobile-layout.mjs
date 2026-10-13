@@ -95,11 +95,43 @@ async function phone(width = 390, height = 844) {
   await page.route("**/*", (r) =>
     new URL(r.request().url()).hostname === "localhost" ? r.continue() : r.abort());
   await page.goto(`${base}/`, { waitUntil: "domcontentloaded" });
-  // React has to have hydrated, or the sticky bar's observers never ran and
-  // every check below would pass against a static document.
-  await page.waitForFunction(() => document.querySelector(".stickycta") !== null);
   await page.waitForTimeout(400);
   return page;
+}
+
+/* HAS REACT ACTUALLY TAKEN OVER THE PAGE?
+ *
+ * This site prerenders, so the markup is all there before a line of React
+ * runs and no selector can tell the two states apart — every element the
+ * checks look for exists in the static HTML. Only behaviour can.
+ *
+ * It used to be answered by waiting for the sticky bar, which was the one
+ * element React alone rendered. That bar is gone, so this presses the
+ * windows stepper and waits for the number to move, then presses the other
+ * one to put it back. Two clicks, no residue, and it tests the thing it is
+ * actually asking about.
+ *
+ * It is worth having rather than letting the later checks fail on their
+ * own, because the failure it catches has a cause nothing else would name:
+ * a build without VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY throws while
+ * creating the client, React never mounts, and the page sits there looking
+ * completely normal and doing nothing. That has cost an afternoon twice.
+ */
+async function interactive(page) {
+  const read = () => page.evaluate(() =>
+    document.querySelector(".quote__stepper-input")?.value ?? null);
+  const before = await read();
+  await page.evaluate(() => document.querySelectorAll(".quote__stepper-btn")[1]?.click());
+  try {
+    await page.waitForFunction(
+      (b) => document.querySelector(".quote__stepper-input")?.value !== b,
+      before, { timeout: 4000 });
+  } catch {
+    return false;
+  }
+  await page.evaluate(() => document.querySelectorAll(".quote__stepper-btn")[0]?.click());
+  await page.waitForTimeout(80);
+  return (await read()) === before;
 }
 
 // ---------------------------------------------------------------------------
@@ -221,152 +253,6 @@ console.log("\n-- anchors clear the sticky header --\n");
 }
 
 // ---------------------------------------------------------------------------
-console.log("\n-- the sticky quote bar knows where it is --\n");
-
-{
-  const page = await phone(390);
-
-  // POLLED, NOT SLEPT ON, and the difference is the whole reliability of
-  // this block. The bar is driven by an IntersectionObserver and animated
-  // over 220ms, so its state after a scroll arrives a frame or two later
-  // and at a time nobody can name. A fixed wait is a guess: too short and
-  // the check fails on a correct page, too long and every run pays for it.
-  // Three of these failed on the first run for exactly that reason.
-  //
-  // Waiting FOR the expected state keeps the assertion honest — a bar that
-  // never gets there times out and fails, which is the only thing a
-  // tolerant check must still catch.
-  // WHERE THE BAR HAS COME TO REST, not where it is on the way there.
-  //
-  // `settles` is about visibility, and visibility flips to "visible" at the
-  // START of the 220ms slide while the transform is still carrying the bar
-  // up from below the fold. Measuring its position at that moment reads a
-  // top edge of 846px on an 844px screen — off the bottom of the viewport,
-  // below everything, so "is anything underneath the bar" came back no
-  // whatever the page looked like. The footer-clearance check was green
-  // against a footer that did not clear it.
-  //
-  // So: poll until two consecutive frames agree on the top edge. That is
-  // the end of the animation, however long it takes, without a magic
-  // number that goes stale the moment the duration changes.
-  const barAtRest = async () => {
-    let last = null;
-    for (let i = 0; i < 40; i++) {
-      const top = await page.evaluate(() =>
-        Math.round(document.querySelector(".stickycta").getBoundingClientRect().top));
-      if (top === last) return top;
-      last = top;
-      await page.waitForTimeout(50);
-    }
-    return last;
-  };
-
-  const settles = async (want) => {
-    try {
-      await page.waitForFunction(
-        (w) => getComputedStyle(document.querySelector(".stickycta")).visibility === w,
-        want, { timeout: 2000 });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // behavior:"instant" on every one of these. html{scroll-behavior:smooth}
-  // means a plain scrollTo is still in flight a second later, and an early
-  // version of this read the bar's state somewhere in the middle of the
-  // page and reported a bug that was not there.
-  const to = (sel) => page.evaluate((s) => document.querySelector(s)
-    .scrollIntoView({ block: "start", behavior: "instant" }), sel);
-  const toY = (y) => page.evaluate((v) => window.scrollTo({ top: v, behavior: "instant" }), y);
-
-  chk("hidden over the hero, which has its own quote button",
-    await settles("hidden"),
-    "a second copy of the hero's own call to action, 600px below it");
-
-  // AT #services, WHICH IS THE FIRST PIXEL IT COULD. The hero's bottom edge
-  // lands at y=92, behind the navbar — visually gone, but still inside the
-  // viewport, so a plain observer calls it visible and the bar stays down
-  // for another screen. rootMargin:"-92px" in StickyCta.jsx is what makes
-  // "on screen" mean "on screen below the header", and this is the check
-  // that holds it there: without it the bar is late and nothing else here
-  // notices.
-  await to("#services");
-  chk("showing as soon as the hero is behind the header",
-    await settles("visible"),
-    "the hero is gone to look at but its last 90px are still technically " +
-      "in the viewport, under the navbar");
-
-  await to("#work");
-  chk("THE POINT: showing once the hero is gone",
-    await settles("visible"),
-    "from here to the form there is no way to act on the page without " +
-      "opening the hamburger first — this bar is the whole reason a " +
-      "visitor convinced on screen six does not have to stay convinced " +
-      "for four more");
-
-  await to("#quote");
-  chk("THE POINT: hidden again over the form itself",
-    await settles("hidden"),
-    "a floating button that scrolls you to what you are already looking " +
-      "at, sitting on top of the Send button at the moment it matters");
-
-  // 200px INTO About, not at its top edge, and the reason is worth writing
-  // down rather than quietly papering over.
-  //
-  // scroll-margin-top lands #about's top at y=92, which is exactly where
-  // the observer's root begins (rootMargin -92px). The form's bottom edge
-  // and the root's top edge coincide, the intersection rectangle is zero
-  // pixels tall, and the browser still calls that intersecting — so at that
-  // one scroll position, and only that one, the bar stays hidden. One pixel
-  // further and it is back.
-  //
-  // That is real and it is harmless: nobody stops on a single pixel, and
-  // the alternative is a fudge factor in the component to satisfy a test.
-  // So the check asks the question a visitor would — am I past the form,
-  // is the bar back — and this note is here so the next person who meets
-  // the boundary knows it was measured rather than missed.
-  await to("#about");
-  await toY(await page.evaluate(() => scrollY + 200));
-  chk("and back once the form is behind you", await settles("visible"));
-
-  await toY(await page.evaluate(() => document.body.scrollHeight));
-  chk("still there at the footer", await settles("visible"));
-
-  // A bar that is off screen must not be in the tab order. visibility:hidden
-  // does that for free; opacity:0 or a transform alone would not, and both
-  // are the obvious thing to reach for when making it slide.
-  await toY(0);
-  const hid = await settles("hidden");
-  const tabbable = await page.evaluate(() =>
-    [...document.querySelectorAll(".stickycta a")].some((a) => a.tabIndex >= 0));
-  chk("...and cannot be tabbed into while hidden",
-    hid && tabbable === false,
-    `settled hidden: ${hid}, tabbable: ${tabbable} — a keyboard user ` +
-      "tabbing from the hero would land on a button nobody can see");
-
-  // The footer has to clear it, or the privacy and terms links are
-  // permanently underneath — and Google's OAuth policy requires the privacy
-  // policy to be reachable from the homepage.
-  await toY(await page.evaluate(() => document.body.scrollHeight));
-  await settles("visible");
-  const barTop = await barAtRest();
-  const clears = await page.evaluate((top) => {
-    const legal = document.querySelector(".footer__legal");
-    if (!legal) return { missing: true };
-    return { legalBottom: Math.round(legal.getBoundingClientRect().bottom), barTop: top };
-  }, barTop);
-  chk("THE POINT: the footer's legal links are not underneath it",
-    !clears.missing && clears.legalBottom <= clears.barTop,
-    clears.missing ? ".footer__legal or .stickycta not found"
-      : `the links end at ${clears.legalBottom}px and the bar starts at ` +
-        `${clears.barTop}px — the one thing that must never be unreachable ` +
-        "is the legal links Google requires to be reachable");
-
-  await page.close();
-}
-
-// ---------------------------------------------------------------------------
 console.log("\n-- the storey picker --\n");
 
 // HERE RATHER THAN IN A PRICING TEST, because the one-word labels exist for
@@ -377,6 +263,18 @@ console.log("\n-- the storey picker --\n");
 // is an edit to the other.
 {
   const page = await phone(320);
+
+  // THE ONLY SECTION HERE THAT NEEDS REACT. Everything above is computed
+  // style and geometry, which the prerendered HTML has on its own; the
+  // price checks below need the buttons to actually do something. Asked
+  // first and asked plainly, so a dead page says so instead of surfacing
+  // as three storeys that all cost $200.
+  chk("THE POINT: the page is interactive at all",
+    await interactive(page),
+    "pressing the windows stepper changed nothing — React has not mounted. " +
+      "Almost always a build with no VITE_SUPABASE_URL / " +
+      "VITE_SUPABASE_ANON_KEY: the client throws, nothing hydrates, and the " +
+      "prerendered page sits there looking perfectly normal");
 
   const picker = await page.evaluate(() => {
     const btns = [...document.querySelectorAll(".quote__choice")];
@@ -497,9 +395,8 @@ console.log("\n-- things a thumb has to hit --\n");
   // and are the only way to do the thing they describe.
   const small = await page.evaluate(() => {
     const sels = [
-      ".stickycta__call", ".stickycta__quote", ".hero__button", ".services__cta",
-      ".navbar__toggle", ".quote__choice", ".quote__stepper-btn", ".work__card-link",
-      ".footer__links a",
+      ".hero__button", ".services__cta", ".navbar__toggle", ".quote__choice",
+      ".quote__stepper-btn", ".work__card-link", ".footer__links a",
     ];
     const out = [];
     for (const sel of sels) {

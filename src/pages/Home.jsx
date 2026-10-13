@@ -4,7 +4,6 @@ import Work from "../components/work/Work";
 import QuoteForm from "../components/quoteform/QuoteForm";
 import About from "../components/gallery/About";
 import Reviews from "../components/reviews/Reviews";
-import StickyCta from "../components/stickycta/StickyCta";
 import { usePageMeta } from "../lib/usePageMeta";
 import { metaForPath } from "../lib/pageMeta";
 
@@ -35,13 +34,6 @@ function Home() {
       <QuoteForm />
       <About />
       <Reviews />
-      {/* LAST, so it is the last thing in the tab order rather than
-          something a keyboard user hits between two sections. It is
-          position:fixed, so where it sits in the document does not affect
-          where it appears. Home only: the service pages carry their quote
-          form in the body rather than behind an anchor, and a bar that
-          scrolls to #quote on a page with no #quote is a dead button. */}
-      <StickyCta />
     </>
   );
 }

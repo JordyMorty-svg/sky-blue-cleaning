@@ -119,23 +119,6 @@
   }
 }
 
-/* CLEARANCE FOR THE STICKY QUOTE BAR, which is fixed to the bottom of the
-   screen below 760px and is showing by the time anybody reaches the footer
-   — the quote form is far above them by then. Without this it covers the
-   copyright line and the privacy and terms links permanently, and the one
-   thing that must never be unreachable on a site is the legal links Google
-   requires to be reachable.
-
-   Here rather than in StickyCta.css because the rule above sets `padding`
-   as a shorthand, and a `padding-bottom` in another file only wins if Vite
-   happens to concatenate it later. It belongs next to the thing it is
-   correcting. */
-@media (max-width: 760px) {
-  .footer {
-    padding-bottom: calc(28px + 70px + env(safe-area-inset-bottom, 0px));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .footer__links a {
     transition: none;
