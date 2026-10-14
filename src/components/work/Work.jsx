@@ -7,10 +7,10 @@ import screenBefore from "../../assets/work/screen-before.jpg";
 import screenAfter from "../../assets/work/screen-after.jpg";
 import storefront from "../../assets/work/commercial-storefront.jpg";
 import solar from "../../assets/work/solar-panels.jpg";
-import porch from "../../assets/work/result-porch.jpg";
 import glasswall from "../../assets/work/result-glasswall.jpg";
 import squeegee from "../../assets/work/result-squeegee-reflection.jpg";
-import picture from "../../assets/work/hero-window.jpg";
+import reflection from "../../assets/work/result-reflection.jpg";
+import pole from "../../assets/work/result-pole.jpg";
 
 /**
  * Photographs of jobs Sky Blue has actually done.
@@ -127,11 +127,29 @@ const RESULTS = [
 
      Action before results, deliberately: a finished window is a state
      anybody's window could already be in, while a hand on a squeegee is
-     evidence somebody turned up. */
+     evidence somebody turned up.
+
+     ------------------------------------------------------------------------
+     TWO OF THESE WERE REPLACED ON 14 OCTOBER, and the reason generalises.
+     ------------------------------------------------------------------------
+
+     The two that went (a covered porch and a picture window on tan siding)
+     were both photographs of clean glass that did not read as clean glass.
+     The porch was shot into shade, so the doors came out dark and half the
+     frame was patio furniture and a bike; the picture window was shot flat
+     along the wall in overcast light, and dark glass photographs the same
+     whether it was washed that morning or last year.
+
+     A clean window is only visible in a photograph when something is
+     reflected in it. That is the test the two replacements pass and the two
+     they replaced failed: both new frames are a run of glass mirroring a
+     blue sky and an autumn garden, which is a thing dirty glass cannot do.
+     The crops are baked in at 4:3 rather than left to object-fit, because
+     centre-cropping a phone portrait put the brush head outside the cell. */
   { src: glasswall, alt: "A wall of glass beside a deck, cleaned, with the water-fed pole still leaning against it" },
   { src: squeegee, alt: "A squeegee crossing a pane in full sun, the cleaner reflected in the glass behind it" },
-  { src: porch, alt: "A covered porch with sliding glass doors cleaned inside and out" },
-  { src: picture, alt: "A large picture window cleaned inside and out, reflecting the garden" },
+  { src: reflection, alt: "A run of cleaned windows mirroring a blue sky and an autumn garden, Hayden working along them with the water-fed pole" },
+  { src: pole, alt: "Hayden washing a window with the water-fed pole, brush head on the glass and a squeegee in his other hand" },
 ];
 
 function Work() {
