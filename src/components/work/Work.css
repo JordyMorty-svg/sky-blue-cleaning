@@ -128,6 +128,14 @@
   background: rgba(37, 99, 235, 0.9);
 }
 
+/* SPACE BETWEEN STACKED PAIRS, with no wrapper element. The caption is
+   always the last thing in a pair and .work__ba the first thing in the
+   next, so the adjacent-sibling selector is the join — and it adds nothing
+   above the first pair, where there is nothing to separate from. */
+.work__caption + .work__ba {
+  margin-top: 40px;
+}
+
 /* Where and what. "A side path in Corvallis" is what turns two photographs
    into a job somebody actually paid for. */
 .work__caption {

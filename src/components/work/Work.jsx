@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import "./Work.css";
 import Lightbox from "../lightbox/Lightbox";
 import pressureBefore from "../../assets/work/pressure-before.jpg";
 import pressureAfter from "../../assets/work/pressure-after.jpg";
+import screenBefore from "../../assets/work/screen-before.jpg";
+import screenAfter from "../../assets/work/screen-after.jpg";
 import storefront from "../../assets/work/commercial-storefront.jpg";
 import solar from "../../assets/work/solar-panels.jpg";
 import porch from "../../assets/work/result-porch.jpg";
@@ -39,6 +41,83 @@ import picture from "../../assets/work/hero-window.jpg";
  * with a pressure washer and not a photographer.
  */
 
+/* ---------------------------------------------------------------------------
+ * WHAT MAKES A PAIR USABLE, because two of the four candidates failed it
+ * ---------------------------------------------------------------------------
+ *
+ * A before and an after are only evidence if the ONLY thing that changed is
+ * the cleaning. Same spot, same angle, same light. Everything else the
+ * viewer notices is something they have to mentally subtract, and a
+ * comparison the viewer has to correct for reads as a trick even when the
+ * work is real.
+ *
+ * Four pairs were shot at a house on 13 October. Two were rejected — a
+ * French door and a slider — and the reason is worth keeping, because the
+ * photographs looked fine individually and the cleaning was obviously done
+ * (cobwebs in the pane corners of the before, gone in the after).
+ *
+ * Every "before" was taken in low golden-hour sun and every "after" in flat
+ * daylight. At the 273px these render, the cobwebs are invisible and what
+ * survives is an orange photo beside a white one. Cropping tight to the
+ * glass made it worse rather than better: in the before the sun is behind
+ * the door so the glass reads dark, and in the after it is front-lit and you
+ * see the garden through it. The single most striking difference between the
+ * two pictures is see-through versus not, and that is the sun.
+ *
+ * Colour-correcting the before would have matched them. That option was
+ * refused: the lead on this section says "No stock photos, no touch-ups",
+ * and a graded before is exactly the thing that sentence promises not to do.
+ *
+ * The screen pair passes on every count — same leaning spot against the same
+ * garage door, same overcast light, and the proof is unarguable: the mesh
+ * goes from opaque to clear enough to read the door panels through.
+ */
+const PAIRS = [
+  {
+    key: "pressure",
+    before: {
+      src: pressureBefore,
+      alt: "A concrete path thick with green moss and dirt before pressure washing",
+      caption: "Before — a side path in Corvallis, moss and years of build-up.",
+    },
+    after: {
+      src: pressureAfter,
+      alt: "The same path after pressure washing, moss gone and the aggregate visible again",
+      caption: "After — the same path, back to bare aggregate.",
+    },
+    caption:
+      "Pressure washing a side path in Corvallis — moss and years of " +
+      "build-up taken back to bare aggregate.",
+  },
+  {
+    /* THE ONLY PHOTOGRAPH OF SCREEN CLEANING ON THE SITE. It is a service on
+       the list above with nothing but an icon to its name, and it is the one
+       job where the result is genuinely hard to picture until you see it:
+       "we cleaned your screens" means very little, and a mesh you can
+       suddenly see through means everything. */
+    key: "screen",
+    before: {
+      src: screenBefore,
+      alt: "A window screen leaning against a garage door before cleaning, the frame grimy and the mesh dark and clogged",
+      caption: "Before — the mesh clogged solid and the frame black along the edges.",
+    },
+    after: {
+      src: screenAfter,
+      alt: "The same screen after cleaning, the frame white again and the mesh clear enough to see the garage door panels through it",
+      caption: "After — the same screen, clear enough to read the garage door through.",
+    },
+    caption:
+      "The same screen, washed through and the frame scrubbed. You can read " +
+      "the garage door through the mesh again — that is what you are paying " +
+      "for.",
+  },
+];
+
+/* Two photographs per pair, and the results start after all of them. Derived
+   rather than counted: an earlier version hard-coded "+2" for the results
+   grid, which was correct for exactly as long as there was one pair. */
+const PAIR_PHOTOS = PAIRS.length * 2;
+
 const RESULTS = [
   /* THE GLASS WALL LEADS. It is the most aspirational photograph here —
      a deck, trees, a wall of glass with the pole still leaning against it
@@ -61,8 +140,12 @@ function Work() {
      before, after, the four results, then the two service shots — rather
      than jumping between three separate little galleries. */
   const PHOTOS = [
-    { src: pressureBefore, alt: "A concrete path thick with green moss and dirt before pressure washing", caption: "Before — a side path in Corvallis, moss and years of build-up." },
-    { src: pressureAfter, alt: "The same path after pressure washing, moss gone and the aggregate visible again", caption: "After — the same path, back to bare aggregate." },
+    /* EACH PHOTO CARRIES ITS OWN WORDS. An earlier version built these by
+       prefixing the shared pair caption — which produced "Before — The same
+       screen, washed through and the frame scrubbed" over the photo of the
+       dirty screen. A caption describing the wrong photograph is worse than
+       no caption at all. */
+    ...PAIRS.flatMap((pair) => [pair.before, pair.after]),
     ...RESULTS.map((r) => ({ src: r.src, alt: r.alt, caption: r.alt })),
     { src: storefront, alt: "Sky Blue's ladder set up on the sidewalk against the front windows of T.S.A. Vintage in downtown Corvallis, the glass reflecting the street and the racks visible inside", caption: "T.S.A. Vintage, downtown Corvallis." },
     { src: solar, alt: "Jordan on a ladder cleaning a rooftop solar array in Corvallis", caption: "Jordan cleaning a rooftop array in Corvallis." },
@@ -111,36 +194,37 @@ function Work() {
             with a side path. The comparison does not get better with size
             past the point where you can see the moss; everything after
             that is just scrolling. */}
-        <div className="work__ba">
-          <figure className="work__shot">
-            {zoom(0,
-            <img
-                src={pressureBefore}
-                alt="A concrete path thick with green moss and dirt before pressure washing"
-                loading="lazy"
-                width="1050"
-                height="1400"
-              />
-            )}
-            <figcaption className="work__tag work__tag--before">Before</figcaption>
-          </figure>
-          <figure className="work__shot">
-            {zoom(1,
-            <img
-                src={pressureAfter}
-                alt="The same path after pressure washing, moss gone and the aggregate visible again"
-                loading="lazy"
-                width="1050"
-                height="1400"
-              />
-            )}
-            <figcaption className="work__tag work__tag--after">After</figcaption>
-          </figure>
-        </div>
-        <p className="work__caption">
-          Pressure washing a side path in Corvallis — moss and years of
-          build-up taken back to bare aggregate.
-        </p>
+        {PAIRS.map((pair, p) => (
+          <Fragment key={pair.key}>
+            <div className="work__ba">
+              <figure className="work__shot">
+                {zoom(p * 2,
+                  <img
+                    src={pair.before.src}
+                    alt={pair.before.alt}
+                    loading="lazy"
+                    width="1050"
+                    height="1400"
+                  />
+                )}
+                <figcaption className="work__tag work__tag--before">Before</figcaption>
+              </figure>
+              <figure className="work__shot">
+                {zoom(p * 2 + 1,
+                  <img
+                    src={pair.after.src}
+                    alt={pair.after.alt}
+                    loading="lazy"
+                    width="1050"
+                    height="1400"
+                  />
+                )}
+                <figcaption className="work__tag work__tag--after">After</figcaption>
+              </figure>
+            </div>
+            <p className="work__caption">{pair.caption}</p>
+          </Fragment>
+        ))}
 
         {/* RESIDENTIAL, SAID OUT LOUD, AND BEFORE THE COMMERCIAL BLOCK.
 
@@ -161,9 +245,8 @@ function Work() {
         <ul className="work__grid">
           {RESULTS.map((r, i) => (
             <li className="work__cell" key={r.alt}>
-              {/* +2 because the two pressure-washing photos come first in
-                  PHOTOS — see the note where it is built. */}
-              {zoom(i + 2, <img src={r.src} alt={r.alt} loading="lazy" />)}
+              {/* After every pair's two photographs — see PAIR_PHOTOS. */}
+              {zoom(PAIR_PHOTOS + i, <img src={r.src} alt={r.alt} loading="lazy" />)}
             </li>
           ))}
         </ul>

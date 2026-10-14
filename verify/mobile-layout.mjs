@@ -275,6 +275,149 @@ console.log("\n-- anchors clear the sticky header --\n");
 }
 
 // ---------------------------------------------------------------------------
+console.log("\n-- every photo opens itself --\n");
+
+/* THE SILENT FAILURE THIS CATCHES. Each photo in Our Work is wrapped in a
+ * button carrying its index into one flat PHOTOS array, and the viewer opens
+ * PHOTOS[index]. Nothing connects the two but the number. Get it wrong and
+ * the page still renders, the viewer still opens, the console stays clean —
+ * you just get somebody else's window.
+ *
+ * It nearly happened. The results grid used `zoom(i + 2, …)`, correct for
+ * exactly as long as there was one before/after pair; adding a second pair
+ * shifted everything by two. It is derived now (PAIR_PHOTOS), and this is
+ * what holds it there.
+ *
+ * Desktop width on purpose: this is about wiring, not layout, and the whole
+ * section is present at every width.
+ */
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.route("**/*", (r) =>
+    new URL(r.request().url()).hostname === "localhost" ? r.continue() : r.abort());
+  await page.goto(`${base}/`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(600);
+  await page.evaluate(() => document.getElementById("work")?.scrollIntoView({ block: "start", behavior: "instant" }));
+  // The photos are loading="lazy"; currentSrc is empty until they arrive.
+  await page.waitForTimeout(1500);
+
+  const leaf = (u) => (u || "").split("/").pop().split("?")[0];
+  const count = await page.evaluate(() => document.querySelectorAll(".work .is-zoomable").length);
+
+  const wrong = [];
+  for (let i = 0; i < count; i++) {
+    const thumb = await page.evaluate((k) =>
+      document.querySelectorAll(".work .is-zoomable")[k].querySelector("img")?.currentSrc, i);
+    await page.evaluate((k) => document.querySelectorAll(".work .is-zoomable")[k].click(), i);
+    await page.waitForSelector(".lb__img", { timeout: 4000 });
+    await page.waitForTimeout(100);
+    const big = await page.evaluate(() => document.querySelector(".lb__img").currentSrc);
+    if (leaf(thumb) !== leaf(big)) wrong.push(`#${i} shows ${leaf(thumb)} but opens ${leaf(big)}`);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(100);
+  }
+
+  chk(`THE POINT: all ${count} photos open themselves, not a neighbour`,
+    count > 0 && wrong.length === 0,
+    wrong.join("; ") || "no zoomable photos found at all — the selector has " +
+      "stopped matching, so this check was passing on an empty list");
+
+  /* EVERY PHOTO IN THE ARRAY IS REACHABLE FROM THE PAGE, which is a
+     different claim from the one above and needs its own check: the
+     indices can all be correct while a whole block has stopped rendering.
+     A mutant that dropped the second before/after pair sailed through,
+     because counting the buttons that exist tells you nothing about the
+     ones that should.
+     The viewer prints "n / total" and total is PHOTOS.length, so comparing
+     it against the buttons on the page catches a photo nobody can get to. */
+  await page.evaluate(() => document.querySelector(".work .is-zoomable")?.click());
+  await page.waitForSelector(".lb__count", { timeout: 4000 });
+  const inViewer = await page.evaluate(() =>
+    Number((document.querySelector(".lb__count")?.textContent || "").split("/")[1]?.trim()));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(120);
+
+  chk("...and every photo in the list has something on the page that opens it",
+    inViewer === count,
+    `the viewer counts ${inViewer} photos, the page offers ${count} buttons — ` +
+      "a photo in the array with no thumbnail is only reachable by arrowing " +
+      "past it, which nobody does");
+
+  /* AND THE WORDS BELONG TO THE PHOTO. The same refactor built each viewer
+     caption by prefixing the shared pair caption, which put "Before — The
+     same screen, washed through and the frame scrubbed" over the picture of
+     the dirty screen. Nothing failed; it just lied. A before captioned with
+     an after's words is the specific thing being checked. */
+  const beforeSaysAfter = await page.evaluate(async () => {
+    const btns = [...document.querySelectorAll(".work .is-zoomable")];
+    const out = [];
+    for (let i = 0; i < btns.length; i++) {
+      const tag = btns[i].closest("figure")?.querySelector(".work__tag")?.textContent.trim().toLowerCase();
+      if (!tag) continue;
+      btns[i].click();
+      await new Promise((r) => setTimeout(r, 120));
+      const capEl = document.querySelector(".lb__caption");
+      const countEl = capEl?.querySelector(".lb__count");
+      const cap = (capEl?.textContent || "").replace(countEl?.textContent || "", "").trim();
+      if (!cap.toLowerCase().startsWith(tag)) out.push(`${tag} photo is captioned "${cap.slice(0, 40)}"`);
+      document.querySelector(".lb__close")?.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    return out;
+  });
+
+  chk("...and a Before is captioned Before",
+    beforeSaysAfter.length === 0,
+    beforeSaysAfter.join("; ") + " — the tag on the thumbnail and the caption " +
+      "in the viewer describe the same photograph, so they have to agree");
+
+  /* THE CHECK ABOVE IS NOT ENOUGH, and a mutant proved it. Re-introducing
+     the original bug — building both captions by prefixing one shared
+     sentence — still produces a caption starting with "Before", so the
+     prefix test passed while the words under the dirty screen read "washed
+     through and the frame scrubbed".
+     What is actually wrong in that case is that the two halves are the same
+     sentence wearing different hats. So: strip the prefix and insist the
+     remainder differs. Two photographs of two different states do not get
+     to share a description. */
+  const shared = await page.evaluate(async () => {
+    const btns = [...document.querySelectorAll(".work .is-zoomable")];
+    const byTag = [];
+    for (let i = 0; i < btns.length; i++) {
+      const tag = btns[i].closest("figure")?.querySelector(".work__tag")?.textContent.trim().toLowerCase();
+      if (!tag) continue;
+      btns[i].click();
+      await new Promise((r) => setTimeout(r, 120));
+      /* THE COUNTER LIVES INSIDE THE CAPTION. .lb__caption contains a
+         nested .lb__count reading "3 / 10", so its textContent ends in a
+         different number for every photo — and two captions that are
+         word-for-word identical never compare equal. A mutant that put the
+         shared-sentence bug back walked through this check twice because
+         of it. Subtract the counter before comparing anything. */
+      const capEl = document.querySelector(".lb__caption");
+      const countEl = capEl?.querySelector(".lb__count");
+      const cap = (capEl?.textContent || "").replace(countEl?.textContent || "", "").trim();
+      byTag.push({ tag, body: cap.replace(/^\s*(before|after)\s*[—–-]?\s*/i, "").toLowerCase() });
+      document.querySelector(".lb__close")?.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    const out = [];
+    for (let i = 0; i + 1 < byTag.length; i += 2) {
+      if (byTag[i].body === byTag[i + 1].body) out.push(byTag[i].body.slice(0, 40));
+    }
+    return out;
+  });
+
+  chk("...and the two halves of a pair do not share one sentence",
+    shared.length === 0,
+    shared.map((s) => `both halves say "${s}…"`).join("; ") +
+      " — one sentence describing both states means it is wrong about one " +
+      "of them, and it will be the before");
+
+  await page.close();
+}
+
+// ---------------------------------------------------------------------------
 console.log("\n-- the storey picker --\n");
 
 // HERE RATHER THAN IN A PRICING TEST, because the one-word labels exist for
